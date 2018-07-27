@@ -1,0 +1,27 @@
+SRCS=src/mqtt.c src/debug.c platform/linux.c
+OBJS=$(SRCS:%.c=%.o)
+
+TARGET=libmqtt.a
+
+AR=ar
+CC=clang
+CFLAGS=-g -Os -Wall -pthread
+
+all: $(TARGET)
+
+test: $(TARGET)
+	$(MAKE) -C tests
+
+$(TARGET): $(OBJS)
+	$(AR) -cr $(TARGET) $(OBJS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+mqtt.o: mqtt.h
+
+clean:
+	$(MAKE) -C tests clean
+	rm -f $(TARGET)
+	rm -f $(OBJS)
+	rm -rf docs/
