@@ -353,6 +353,15 @@ Buffer *encode_publish(PublishPayload *payload) {
 
     Buffer *buffer = make_buffer_for_header(sz, PacketTypePublish);
 
+    // Flags in header
+    if (payload->retain) {
+        buffer->data[buffer->position - 2] |= 1;
+    }
+    buffer->data[buffer->position - 2] |= (payload->qos << 1);
+    if (payload->duplicate) {
+        buffer->data[buffer->position - 2] |= 8;
+    }
+
     // Variable header
     utf8_string_encode(payload->topic, buffer);
     buffer->data[buffer->position++] = (payload->packet_id & 0xff00) >> 8;
