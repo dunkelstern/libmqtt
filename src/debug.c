@@ -1,3 +1,5 @@
+#if DEBUG
+
 #include "stdio.h"
 
 #include "debug.h"
@@ -28,3 +30,5 @@ void hexdump(char *data, size_t len) {
         i += 16;
     }
 }
+
+#endif /* DEBUG */
