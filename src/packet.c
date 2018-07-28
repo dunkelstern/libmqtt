@@ -157,111 +157,150 @@ size_t utf8_string_encode(char *string, Buffer *buffer) {
  * Decoder
  */
 
-ConnectPayload *decode_connect(Buffer *buffer) {
+bool decode_connect(Buffer *buffer, ConnectPayload *payload) {
+    // Validate this is actually a connect packet
+    char template[] = { 0x00, 0x04, 'M', 'Q', 'T', 'T' };
+    if (memcmp(buffer->data + buffer->position, template, sizeof(template)) != 0) {
+        return false;
+    }
+    buffer->position += sizeof(template);
 
-}
-
-ConnAckPayload *decode_connack(Buffer *buffer) {
+    payload->protocol_level = buffer->data[buffer->position++];
+    uint8_t flags = buffer->data[buffer->position++];
+    payload->clean_session = ((flags & 0x02) > 0);
+    payload->keepalive_interval = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->client_id = utf8_string_decode(buffer);
     
+    // last will
+    if (flags & 0x04) {
+        payload->will_topic = utf8_string_decode(buffer);
+        payload->will_message = utf8_string_decode(buffer);
+    }
+    payload->will_qos = (flags & 0x18) >> 3;
+    payload->retain_will = (flags & 0x20) > 0;
+    
+    // username
+    if (flags & 0x40) {
+        payload->username = utf8_string_decode(buffer);
+    }
+
+    // password
+    if (flags & 0x80) {
+        payload->password = utf8_string_decode(buffer);
+    }
+
+    return true;
 }
 
-PublishPayload *decode_publish(Buffer *buffer) {
-    
+bool decode_connack(Buffer *buffer, ConnAckPayload *payload) {
+    payload->session_present = buffer->data[buffer->position++] & 0x01;
+    payload->status = buffer->data[buffer->position++];
+
+    return true;
 }
 
-PubAckPayload *decode_puback(Buffer *buffer) {
-    
+bool decode_publish(Buffer *buffer, PublishPayload *payload) {
+    return false;
 }
 
-PubRecPayload *decode_pubrec(Buffer *buffer) {
-    
+bool decode_puback(Buffer *buffer, PubAckPayload *payload) {
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+
+    return true;
 }
 
-PubRelPayload *decode_pubrel(Buffer *buffer) {
-    
+bool decode_pubrec(Buffer *buffer, PubRecPayload *payload) {
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+
+    return true;    
 }
 
-PubCompPayload *decode_pubcomp(Buffer *buffer) {
-    
+bool decode_pubrel(Buffer *buffer, PubRelPayload *payload) {
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+
+    return true;
 }
 
-SubscribePayload *decode_subscribe(Buffer *buffer) {
-    
+bool decode_pubcomp(Buffer *buffer, PubCompPayload *payload) {
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+
+    return true;
 }
 
-SubAckPayload *decode_suback(Buffer *buffer) {
-    
+bool decode_subscribe(Buffer *buffer, SubscribePayload *payload) {
+    return false;
 }
 
-UnsubscribePayload *decode_unsubscribe(Buffer *buffer) {
-    
+bool decode_suback(Buffer *buffer, SubAckPayload *payload) {
+    return false;
 }
 
-UnsubAckPayload *decode_unsuback(Buffer *buffer) {
-    
+bool decode_unsubscribe(Buffer *buffer, UnsubscribePayload *payload) {
+    return false;
 }
 
-int decode_pingreq(Buffer *buffer) {
-    
+bool decode_unsuback(Buffer *buffer, UnsubAckPayload *payload) {
+    return false;
 }
 
-int decode_pingresp(Buffer *buffer) {
-    
-}
-
-int decode_disconnect(Buffer *buffer) {
-    
-}
 
 MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
-    MQTTControlPacketType type = (buffer->data[0] & 0xf0) >> 4;
-    MQTTPacket *result =allocate_MQTTPacket(type);
+    // validate that the buffer is big enough
+    MQTTControlPacketType type = (buffer->data[buffer->position] & 0xf0) >> 4;
+    buffer->position++;
+    size_t packet_size = variable_length_int_decode(buffer);
 
+    if (buffer_free_space(buffer) < packet_size) {
+        return NULL; // buffer incomplete
+    }
+    MQTTPacket *result = allocate_MQTTPacket(type);
+
+    bool valid = false;
     switch (type) {
         case PacketTypeConnect:
-            result->payload = (void *)decode_connect(buffer);
+            valid = decode_connect(buffer, result->payload);
             break;
         case PacketTypeConnAck:
-            result->payload = (void *)decode_connack(buffer);
+            valid = decode_connack(buffer, result->payload);
             break;
         case PacketTypePublish:
-            result->payload = (void *)decode_publish(buffer);
+            valid = decode_publish(buffer, result->payload);
             break;
         case PacketTypePubAck:
-            result->payload = (void *)decode_puback(buffer);
+            valid = decode_puback(buffer, result->payload);
             break;
         case PacketTypePubRec:
-            result->payload = (void *)decode_pubrec(buffer);
+            valid = decode_pubrec(buffer, result->payload);
             break;
         case PacketTypePubRel:
-            result->payload = (void *)decode_pubrel(buffer);
+            valid = decode_pubrel(buffer, result->payload);
             break;
         case PacketTypePubComp:
-            result->payload = (void *)decode_pubcomp(buffer);
+            valid = decode_pubcomp(buffer, result->payload);
             break;
         case PacketTypeSubscribe:
-            result->payload = (void *)decode_subscribe(buffer);
+            valid = decode_subscribe(buffer, result->payload);
             break;
         case PacketTypeSubAck:
-            result->payload = (void *)decode_suback(buffer);
+            valid = decode_suback(buffer, result->payload);
             break;
         case PacketTypeUnsubscribe:
-            result->payload = (void *)decode_unsubscribe(buffer);
+            valid = decode_unsubscribe(buffer, result->payload);
             break;
         case PacketTypeUnsubAck:
-            result->payload = (void *)decode_unsuback(buffer);
+            valid = decode_unsuback(buffer, result->payload);
             break;
         case PacketTypePingReq:
-            result->payload = (void *)decode_pingreq(buffer);
-            break;
         case PacketTypePingResp:
-            result->payload = (void *)decode_pingresp(buffer);
-            break;
         case PacketTypeDisconnect:
-            result->payload = (void *)decode_disconnect(buffer);
+            valid = true; // there is no payload
             break;
     }
 
+    if (!valid) {
+        free_MQTTPacket(result);
+        return NULL;
+    }
     return result;
 }
 
