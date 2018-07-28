@@ -17,6 +17,7 @@ struct _MQTTHandle {
     int num_subscriptions;
 
     int sock;
+    bool reader_alive;
 
     // TODO: status queue (Waiting for ACK)
     PlatformData *platform;

@@ -5,25 +5,34 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <errno.h>
 
 #include "mqtt.h"
 #include "mqtt_internal.h"
 #include "platform.h"
 
-// TODO: Make configurable by platform
-#define BUF_LEN 256
+#define BUF_LEN MAX_BUFFER_SIZE
 
 static void _reader(MQTTHandle *handle) {
     int num_bytes;
     char buffer[BUF_LEN];
 
+    handle->reader_alive = true;
+    
     while (1) {
         num_bytes = read(handle->sock, &buffer, BUF_LEN);
         if (num_bytes == 0) {
-            /* Socket closed */
+            /* Socket closed, coordinated shutdown */
+            handle->reader_alive = false;
             return;
         } else if (num_bytes < 0) {
-            /* Error, TODO: Handle */
+            if ((errno == EINTR) || (errno == EAGAIN)) {
+                continue;
+            }
+
+            /* Set reader task to dead */
+            handle->reader_alive = false;
+            return;
         }
 
         // TODO: Parse and dispatch

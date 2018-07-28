@@ -1,11 +1,13 @@
-SRCS=src/mqtt.c src/debug.c platform/linux.c
+SRCS=src/mqtt.c src/packet.c src/protocol.c src/debug.c platform/linux.c
 OBJS=$(SRCS:%.c=%.o)
 
 TARGET=libmqtt.a
 
+PLATFORM_FLAGS=-DMAX_BUFFER_SIZE=256
+
 AR=ar
 CC=clang
-CFLAGS=-g -Os -Wall -pthread
+CFLAGS=-g -Os -Wall -pthread -I./platform -I./src $(PLATFORM_FLAGS)
 
 all: $(TARGET)
 

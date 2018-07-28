@@ -2,6 +2,7 @@
 #define mqtt_h__included
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct _MQTTHandle MQTTHandle;
 
