@@ -1,11 +1,13 @@
 #ifndef debug_h__included
 #define debug_h__included
 
+#if DEBUG
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 
-#if DEBUG
+#define DEBUG_LOG(fmt, ...) fprintf(stderr, fmt "\n", ## __VA_ARGS__);
 
 static inline void hexdump(char *data, size_t len, int indent) {
     for (int i = 0; i < len;) {
@@ -48,6 +50,7 @@ static inline void hexdump(char *data, size_t len, int indent) {
 
 #else /* DEBUG */
 
+#define DEBUG_LOG(fmt, ...) /* */
 #define hexdump(_data, _len) /* */
 
 #endif /* DEBUG */
