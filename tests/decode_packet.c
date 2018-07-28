@@ -1,6 +1,9 @@
 #include "test.h"
 #include "packet.h"
 
+extern uint16_t variable_length_int_decode(Buffer *buffer);
+extern char *utf8_string_decode(Buffer *buffer);
+
 // Variable length int data check
 
 TestResult test_vl_int_data_0(void) {

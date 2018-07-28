@@ -127,33 +127,4 @@ void free_MQTTPacket(MQTTPacket *packet);
 Buffer *mqtt_packet_encode(MQTTPacket *packet);
 MQTTPacket *allocate_MQTTPacket(MQTTControlPacketType type);
 
-
-/*
- * Internal
- */
-
-size_t variable_length_int_encode(uint16_t value, Buffer *buffer);
-size_t variable_length_int_size(uint16_t value);
-size_t utf8_string_encode(char *string, Buffer *buffer);
-
-Buffer *make_buffer_for_header(size_t sz, MQTTControlPacketType type);
-Buffer *encode_connect(ConnectPayload *payload);
-Buffer *encode_connack(ConnAckPayload *payload);
-Buffer *encode_publish(PublishPayload *payload);
-Buffer *encode_puback(PubAckPayload *payload);
-Buffer *encode_pubrec(PubRecPayload *payload);
-Buffer *encode_pubrel(PubRelPayload *payload);
-Buffer *encode_pubcomp(PubCompPayload *payload);
-Buffer *encode_subscribe(SubscribePayload *payload);
-Buffer *encode_suback(SubAckPayload *payload);
-Buffer *encode_unsubscribe(UnsubscribePayload *payload);
-Buffer *encode_unsuback(UnsubAckPayload *payload);
-Buffer *encode_pingreq();
-Buffer *encode_pingresp();
-Buffer *encode_disconnect();
-
-
-uint16_t variable_length_int_decode(Buffer *buffer);
-char *utf8_string_decode(Buffer *buffer);
-
 #endif /* packet_h__included */

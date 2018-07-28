@@ -1,6 +1,11 @@
 #include "test.h"
 #include "packet.h"
 
+extern size_t variable_length_int_encode(uint16_t value, Buffer *buffer);
+extern size_t variable_length_int_size(uint16_t value);
+extern size_t utf8_string_encode(char *string, Buffer *buffer);
+extern Buffer *make_buffer_for_header(size_t sz, MQTTControlPacketType type);
+
 // Variable length int length calculation
 TestResult test_vl_int_0(void) {
     TESTASSERT(variable_length_int_size(0) == 1, "Values < 128 should fit in one byte");
@@ -154,7 +159,7 @@ TestResult test_encode_connect_simple(void) {
     payload->keepalive_interval = 10;
     payload->clean_session = 1;
 
-    Buffer *encoded = encode_connect(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeConnect, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -184,7 +189,7 @@ TestResult test_encode_connect_will(void) {
     payload->will_qos = MQTT_QOS_1;
     payload->retain_will = true;
 
-    Buffer *encoded = encode_connect(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeConnect, payload });
     free(payload);
 
     return TESTMEMCMP(
@@ -218,7 +223,7 @@ TestResult test_encode_connect_auth(void) {
     payload->username = "anon";
     payload->password = "test";
 
-    Buffer *encoded = encode_connect(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeConnect, payload });
     free(payload);
 
     return TESTMEMCMP(
@@ -238,7 +243,7 @@ TestResult test_encode_connack(void) {
     payload->session_present = true;
     payload->status = ConnAckStatusAccepted;
 
-    Buffer *encoded = encode_connack(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeConnAck, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -260,7 +265,7 @@ TestResult test_encode_publish_no_msg(void) {
     payload->topic = "test/topic";
     payload->packet_id = 10;
 
-    Buffer *encoded = encode_publish(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -284,7 +289,7 @@ TestResult test_encode_publish_with_msg(void) {
     payload->packet_id = 10;
     payload->message = "payload";
 
-    Buffer *encoded = encode_publish(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -302,7 +307,7 @@ TestResult test_encode_puback(void) {
 
     payload->packet_id = 10;
 
-    Buffer *encoded = encode_puback(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubAck, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -320,7 +325,7 @@ TestResult test_encode_pubrec(void) {
 
     payload->packet_id = 10;
 
-    Buffer *encoded = encode_pubrec(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRec, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -338,7 +343,7 @@ TestResult test_encode_pubrel(void) {
 
     payload->packet_id = 10;
 
-    Buffer *encoded = encode_pubrel(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRel, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -356,7 +361,7 @@ TestResult test_encode_pubcomp(void) {
 
     payload->packet_id = 10;
 
-    Buffer *encoded = encode_pubcomp(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubComp, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -378,7 +383,7 @@ TestResult test_encode_subscribe(void) {
     payload->topic = "test/topic";
     payload->qos = MQTT_QOS_1;
 
-    Buffer *encoded = encode_subscribe(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeSubscribe, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -398,7 +403,7 @@ TestResult test_encode_suback(void) {
     payload->packet_id = 10;
     payload->status = SubAckStatusQoS2;
 
-    Buffer *encoded = encode_suback(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeSubAck, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -418,7 +423,7 @@ TestResult test_encode_unsubscribe(void) {
     payload->packet_id = 10;
     payload->topic = "test/topic";
 
-    Buffer *encoded = encode_unsubscribe(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeUnsubscribe, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -436,7 +441,7 @@ TestResult test_encode_unsuback(void) {
 
     payload->packet_id = 10;
 
-    Buffer *encoded = encode_unsuback(payload);
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeUnsubAck, payload });
     free(payload);
     
     return TESTMEMCMP(
@@ -450,7 +455,7 @@ TestResult test_encode_pingreq(void) {
         0xc0, 0x00 // header
     };
 
-    Buffer *encoded = encode_pingreq();
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePingReq, NULL });
     
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
@@ -463,7 +468,7 @@ TestResult test_encode_pingresp(void) {
         0xd0, 0x00 // header
     };
 
-    Buffer *encoded = encode_pingresp();
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePingResp, NULL });
     
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
@@ -476,7 +481,7 @@ TestResult test_encode_disconnect(void) {
         0xe0, 0x00 // header
     };
 
-    Buffer *encoded = encode_disconnect();
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeDisconnect, NULL });
     
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
