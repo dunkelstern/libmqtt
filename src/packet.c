@@ -1,5 +1,5 @@
 #include <assert.h>
-
+#include "debug.h"
 #include "packet.h"
 
 /*
@@ -199,8 +199,26 @@ bool decode_connack(Buffer *buffer, ConnAckPayload *payload) {
     return true;
 }
 
-bool decode_publish(Buffer *buffer, PublishPayload *payload) {
-    return false;
+bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
+    uint8_t flags = buffer->data[buffer->position - 2] & 0x0f;
+    uint16_t start_pos = buffer->position;
+
+    payload->qos = (flags & 0x06) >> 1;
+    payload->retain = ((flags & 0x01) > 0);
+    payload->duplicate = ((flags & 0x08) > 0);
+
+    payload->topic = utf8_string_decode(buffer);
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+
+    size_t len = sz - (buffer->position - start_pos) + 1;
+    if (len > 1) {
+        payload->message = malloc(len);
+        memcpy(payload->message, buffer->data + buffer->position, len - 1);
+        payload->message[len] = '\0';
+        buffer->position += len;
+    }
+
+    return true;
 }
 
 bool decode_puback(Buffer *buffer, PubAckPayload *payload) {
@@ -228,19 +246,31 @@ bool decode_pubcomp(Buffer *buffer, PubCompPayload *payload) {
 }
 
 bool decode_subscribe(Buffer *buffer, SubscribePayload *payload) {
-    return false;
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->topic = utf8_string_decode(buffer);
+    payload->qos = buffer->data[buffer->position++] & 0x03;
+
+    return true;
 }
 
 bool decode_suback(Buffer *buffer, SubAckPayload *payload) {
-    return false;
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->status = buffer->data[buffer->position++];
+
+    return true;
 }
 
 bool decode_unsubscribe(Buffer *buffer, UnsubscribePayload *payload) {
-    return false;
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->topic = utf8_string_decode(buffer);
+
+    return true;
 }
 
 bool decode_unsuback(Buffer *buffer, UnsubAckPayload *payload) {
-    return false;
+    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+
+    return true;
 }
 
 
@@ -264,7 +294,7 @@ MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
             valid = decode_connack(buffer, result->payload);
             break;
         case PacketTypePublish:
-            valid = decode_publish(buffer, result->payload);
+            valid = decode_publish(buffer, result->payload, packet_size);
             break;
         case PacketTypePubAck:
             valid = decode_puback(buffer, result->payload);
