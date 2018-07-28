@@ -1,4 +1,4 @@
-SRCS=encode_packet.c
+SRCS=encode_packet.c decode_packet.c
 OBJS=$(SRCS:%.c=%.o)
 TARGETS=$(SRCS:%.c=%.test)
 
