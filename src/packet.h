@@ -152,4 +152,8 @@ Buffer *encode_pingreq();
 Buffer *encode_pingresp();
 Buffer *encode_disconnect();
 
+
+uint16_t variable_length_int_decode(Buffer *buffer);
+char *utf8_string_decode(Buffer *buffer);
+
 #endif /* packet_h__included */
