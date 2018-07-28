@@ -42,14 +42,16 @@ extern DefinedTest defined_tests[];
         TEST(NULL, NULL) \
     }
 
+#define TEST_OK() return (TestResult){ TestStatusOk, NULL, NULL, NULL }
 #define TESTRESULT(_status, _message) return (TestResult){ _status, _message, NULL, NULL }
 #define TESTRESULT_BUFFER(_status, _message, _buffer, _template) return (TestResult){ _status, _message, _buffer, _template }
 
 #ifdef TIMETRIAL
-# define TESTASSERT(_assertion, _message) return (TestResult){ (_assertion) ? TestStatusOk : TestStatusFailure, NULL }
+# define TESTASSERT(_assertion, _message) if (!(_assertion)) { return (TestResult){ TestStatusFailure, NULL, NULL, NULL }; }
 #else
-# define TESTASSERT(_assertion, _message) return (TestResult){ (_assertion) ? TestStatusOk : TestStatusFailure, _message }
+# define TESTASSERT(_assertion, _message) if (!(_assertion)) { return (TestResult){ TestStatusFailure, _message, NULL, NULL }; }
 #endif
+
 
 static inline TestResult TESTMEMCMP(Buffer *template, Buffer *check) {
     if (template->len != check->len) {
@@ -65,12 +67,15 @@ static inline TestResult TESTMEMCMP(Buffer *template, Buffer *check) {
 void timetrial(DefinedTest *test);
 
 int main(int argc, char **argv) {
-    bool failure_seen = false;
+    uint16_t successes = 0;
+    uint16_t skips = 0;
+    uint16_t failures = 0;
 
     for(DefinedTest *test = defined_tests; test->run != NULL; test++) {
         TestResult result = test->run();
         switch (result.status) {
             case TestStatusOk:
+                successes++;
                 fprintf(stdout, "info: Test %s suceeded ", test->name);
                 #ifdef TIMETRIAL
                 timetrial(test);
@@ -79,20 +84,21 @@ int main(int argc, char **argv) {
                 #endif
                 break;
             case TestStatusSkipped:
+                skips++;
                 fprintf(stderr, "%s:%d: warning: Skipped test %s\n", test->file, test->line, test->name);
                 if (result.message) {
                     fprintf(stderr, "  -> %s\n", result.message);
                 }
                 break;
             case TestStatusFailure:
-                failure_seen = true;
+                failures++;
                 fprintf(stderr, "%s:%d: error: Test %s failed\n", test->file, test->line, test->name);
                 if (result.message) {
                     fprintf(stderr, "  -> %s\n", result.message);
                 }
                 break;
             case TestStatusFailureHexdump:
-                failure_seen = true;
+                failures++;
                 fprintf(stderr, "%s:%d: error: Test %s failed\n", test->file, test->line, test->name);
                 if (result.message) {
                     fprintf(stderr, "  -> %s\n", result.message);
@@ -109,7 +115,14 @@ int main(int argc, char **argv) {
         }
     }
 
-    return failure_seen;
+    fprintf(stderr, "\n%d Tests, %d skipped, %d succeeded, %d failed\n\n",
+        skips + successes + failures,
+        skips,
+        successes,
+        failures
+    );
+
+    return failures > 0;
 }
 
 #ifdef TIMETRIAL
