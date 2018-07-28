@@ -466,7 +466,7 @@ Buffer *encode_suback(SubAckPayload *payload) {
 
 Buffer *encode_unsubscribe(UnsubscribePayload *payload) {
     size_t sz = 2; // packet id
-    sz += strlen(payload->topic); // topic
+    sz += strlen(payload->topic) + 2; // topic
 
     Buffer *buffer = make_buffer_for_header(sz, PacketTypeUnsubscribe);
 
