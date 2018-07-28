@@ -98,11 +98,11 @@ int main(int argc, char **argv) {
                     fprintf(stderr, "  -> %s\n", result.message);
                 }
                 if (result.template) {
-                    fprintf(stderr, "  -> Template (%d bytes)\n", result.template->len);
+                    fprintf(stderr, "  -> Template (%zu bytes)\n", result.template->len);
                     buffer_hexdump(result.template, 5);
                 }
                 if (result.buffer) {
-                    fprintf(stderr, "  -> Buffer (%d bytes)\n", result.buffer->len);
+                    fprintf(stderr, "  -> Buffer (%zu bytes)\n", result.buffer->len);
                     buffer_hexdump(result.buffer, 5);
                 }
                 break;

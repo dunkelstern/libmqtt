@@ -95,7 +95,7 @@ TestResult test_vl_int_data_32767(void) {
 TestResult test_utf8_string_null(void) {
     char data[] = { 0x00, 0x00 };
     Buffer *buffer = buffer_allocate(sizeof(data));
-    size_t sz = utf8_string_encode(NULL, buffer);
+    (void)utf8_string_encode(NULL, buffer);
 
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
@@ -106,7 +106,7 @@ TestResult test_utf8_string_null(void) {
 TestResult test_utf8_string_empty(void) {
     char data[] = { 0x00, 0x00 };
     Buffer *buffer = buffer_allocate(sizeof(data));
-    size_t sz = utf8_string_encode("", buffer);
+    (void)utf8_string_encode("", buffer);
 
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
@@ -117,7 +117,7 @@ TestResult test_utf8_string_empty(void) {
 TestResult test_utf8_string_hello(void) {
     char data[] = { 0x00, 0x05, 'h', 'e', 'l', 'l', 'o' };
     Buffer *buffer = buffer_allocate(sizeof(data));
-    size_t sz = utf8_string_encode("hello", buffer);
+    (void)utf8_string_encode("hello", buffer);
 
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
@@ -222,6 +222,263 @@ TestResult test_encode_connect_auth(void) {
     );
 }
 
+TestResult test_encode_connack(void) {
+    char data[] = {
+        0x20, 0x02, // header
+        0x01, // session present
+        0x00 // accepted
+    };
+    ConnAckPayload *payload = calloc(1, sizeof(ConnAckPayload));
+
+    payload->session_present = true;
+    payload->status = ConnAckStatusAccepted;
+
+    Buffer *encoded = encode_connack(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_publish_no_msg(void) {
+    char data[] = {
+        0x33, 0x0e, // header, qos1, retain
+        0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
+        0x00, 0x0a // packet id
+    };
+    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+
+    payload->qos = MQTT_QOS_1;
+    payload->retain = true;
+    payload->topic = "test/topic";
+    payload->packet_id = 10;
+
+    Buffer *encoded = encode_publish(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_publish_with_msg(void) {
+    char data[] = {
+        0x33, 0x15, // header, qos1, retain
+        0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
+        0x00, 0x0a, // packet id
+        'p', 'a', 'y', 'l', 'o', 'a', 'd'
+    };
+    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+
+    payload->qos = MQTT_QOS_1;
+    payload->retain = true;
+    payload->topic = "test/topic";
+    payload->packet_id = 10;
+    payload->message = "payload";
+
+    Buffer *encoded = encode_publish(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_puback(void) {
+    char data[] = {
+        0x40, 0x02, // header
+        0x00, 0x0a  // packet id 
+    };
+    PubAckPayload *payload = calloc(1, sizeof(PubAckPayload));
+
+    payload->packet_id = 10;
+
+    Buffer *encoded = encode_puback(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_pubrec(void) {
+    char data[] = {
+        0x50, 0x02, // header
+        0x00, 0x0a  // packet id 
+    };
+    PubRecPayload *payload = calloc(1, sizeof(PubRecPayload));
+
+    payload->packet_id = 10;
+
+    Buffer *encoded = encode_pubrec(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_pubrel(void) {
+    char data[] = {
+        0x60, 0x02, // header
+        0x00, 0x0a  // packet id 
+    };
+    PubRelPayload *payload = calloc(1, sizeof(PubRelPayload));
+
+    payload->packet_id = 10;
+
+    Buffer *encoded = encode_pubrel(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_pubcomp(void) {
+    char data[] = {
+        0x70, 0x02, // header
+        0x00, 0x0a  // packet id 
+    };
+    PubCompPayload *payload = calloc(1, sizeof(PubCompPayload));
+
+    payload->packet_id = 10;
+
+    Buffer *encoded = encode_pubcomp(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_subscribe(void) {
+    char data[] = {
+        0x80, 0x0f, // header
+        0x00, 0x0a,  // packet id
+        0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
+        0x01 // qos
+    };
+    SubscribePayload *payload = calloc(1, sizeof(SubscribePayload));
+
+    payload->packet_id = 10;
+    payload->topic = "test/topic";
+    payload->qos = MQTT_QOS_1;
+
+    Buffer *encoded = encode_subscribe(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_suback(void) {
+    char data[] = {
+        0x90, 0x03, // header
+        0x00, 0x0a,  // packet id,
+        0x02 // status
+    };
+    SubAckPayload *payload = calloc(1, sizeof(SubAckPayload));
+
+    payload->packet_id = 10;
+    payload->status = SubAckStatusQoS2;
+
+    Buffer *encoded = encode_suback(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_unsubscribe(void) {
+    char data[] = {
+        0xa0, 0x0e, // header
+        0x00, 0x0a, // packet id
+        0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
+    };
+    UnsubscribePayload *payload = calloc(1, sizeof(UnsubscribePayload));
+
+    payload->packet_id = 10;
+    payload->topic = "test/topic";
+
+    Buffer *encoded = encode_unsubscribe(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_unsuback(void) {
+    char data[] = {
+        0xb0, 0x02, // header
+        0x00, 0x0a  // packet id,
+    };
+    UnsubAckPayload *payload = calloc(1, sizeof(UnsubAckPayload));
+
+    payload->packet_id = 10;
+
+    Buffer *encoded = encode_unsuback(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_pingreq(void) {
+    char data[] = {
+        0xc0, 0x00 // header
+    };
+
+    Buffer *encoded = encode_pingreq();
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_pingresp(void) {
+    char data[] = {
+        0xd0, 0x00 // header
+    };
+
+    Buffer *encoded = encode_pingresp();
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_disconnect(void) {
+    char data[] = {
+        0xe0, 0x00 // header
+    };
+
+    Buffer *encoded = encode_disconnect();
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
 // not implemented placeholder
 
 TestResult not_implemented(void) {
@@ -248,17 +505,18 @@ TESTS(
     TEST("Encode Connect simple", test_encode_connect_simple),
     TEST("Encode Connect with will", test_encode_connect_will),
     TEST("Encode Connect with auth", test_encode_connect_auth),
-    TEST("Encode ConnAck", not_implemented),
-    TEST("Encode Publish", not_implemented),
-    TEST("Encode PubAck", not_implemented),
-    TEST("Encode PubRec", not_implemented),
-    TEST("Encode PubRel", not_implemented),
-    TEST("Encode PubComp", not_implemented),
-    TEST("Encode Subscribe", not_implemented),
-    TEST("Encode SubAck", not_implemented),
-    TEST("Encode Unsubscribe", not_implemented),
-    TEST("Encode UnsubAck", not_implemented),
-    TEST("Encode PingReq", not_implemented),
-    TEST("Encode PingResp", not_implemented),
-    TEST("Encode Disconnect", not_implemented)
+    TEST("Encode ConnAck", test_encode_connack),
+    TEST("Encode Publish with no message", test_encode_publish_no_msg),
+    TEST("Encode Publish with message", test_encode_publish_with_msg),
+    TEST("Encode PubAck", test_encode_puback),
+    TEST("Encode PubRec", test_encode_pubrec),
+    TEST("Encode PubRel", test_encode_pubrel),
+    TEST("Encode PubComp", test_encode_pubcomp),
+    TEST("Encode Subscribe", test_encode_subscribe),
+    TEST("Encode SubAck", test_encode_suback),
+    TEST("Encode Unsubscribe", test_encode_unsubscribe),
+    TEST("Encode UnsubAck", test_encode_unsuback),
+    TEST("Encode PingReq", test_encode_pingreq),
+    TEST("Encode PingResp", test_encode_pingresp),
+    TEST("Encode Disconnect", test_encode_disconnect)
 );
