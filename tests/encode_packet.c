@@ -4,22 +4,27 @@
 // Variable length int length calculation
 TestResult test_vl_int_0(void) {
     TESTASSERT(variable_length_int_size(0) == 1, "Values < 128 should fit in one byte");
+    TEST_OK();
 }
 
 TestResult test_vl_int_127(void) {
     TESTASSERT(variable_length_int_size(127) == 1, "Values < 128 should fit in one byte");
+    TEST_OK();
 }
 
 TestResult test_vl_int_128(void) {
     TESTASSERT(variable_length_int_size(128) == 2, "Values < 16384 should fit in two bytes");
+    TEST_OK();
 }
 
 TestResult test_vl_int_16383(void) {
     TESTASSERT(variable_length_int_size(16383) == 2, "Values < 16384 should fit in two bytes");
+    TEST_OK();
 }
 
 TestResult test_vl_int_16384(void) {
     TESTASSERT(variable_length_int_size(16384) == 3, "Values < 2097151 should fit in three bytes");
+    TEST_OK();
 }
 
 // Variable length int data check
