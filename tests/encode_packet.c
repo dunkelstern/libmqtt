@@ -26,133 +26,103 @@ TestResult test_vl_int_16384(void) {
 
 TestResult test_vl_int_data_0(void) {
     char data[] = { 0 };
-    Buffer *buffer = buffer_allocate(5);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     variable_length_int_encode(0, buffer);
 
-    TESTASSERT(
-        (
-            (buffer->position == 1)
-            &&
-            (memcmp(buffer->data, data, 1) == 0)
-        ),
-    "Variable length int of 0 should result in [0x00]");
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 TestResult test_vl_int_data_127(void) {
     char data[] = { 127 };
-    Buffer *buffer = buffer_allocate(5);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     variable_length_int_encode(127, buffer);
 
-    TESTASSERT(
-        (
-            (buffer->position == 1)
-            &&
-            (memcmp(buffer->data, data, 1) == 0)
-        ),
-    "Variable length int of 127 should result in [0x7f]");
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 TestResult test_vl_int_data_128(void) {
     char data[] = { 0x80, 0x01 };
-    Buffer *buffer = buffer_allocate(5);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     variable_length_int_encode(128, buffer);
 
-    TESTASSERT(
-        (
-            (buffer->position == 2)
-            &&
-            (memcmp(buffer->data, data, 2) == 0)
-        ),
-    "Variable length int of 128 should result in [0x80, 0x01]");
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 TestResult test_vl_int_data_16383(void) {
     char data[] = { 0xff, 0x7f };
-    Buffer *buffer = buffer_allocate(5);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     variable_length_int_encode(16383, buffer);
 
-    TESTASSERT(
-        (
-            (buffer->position == 2)
-            &&
-            (memcmp(buffer->data, data, 2) == 0)
-        ),
-    "Variable length int of 16383 should result in [0xff, 0x7f]");
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 TestResult test_vl_int_data_16384(void) {
     char data[] = { 0x80, 0x80, 0x01 };
-    Buffer *buffer = buffer_allocate(5);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     variable_length_int_encode(16384, buffer);
 
-    TESTASSERT(
-        (
-            (buffer->position == 3)
-            &&
-            (memcmp(buffer->data, data, 3) == 0)
-        ),
-    "Variable length int of 16384 should result in [0x80, 0x80, 0x01]");
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 TestResult test_vl_int_data_32767(void) {
     char data[] = { 0xff, 0xff, 0x01 };
-    Buffer *buffer = buffer_allocate(5);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     variable_length_int_encode(32767, buffer);
 
-    TESTASSERT(
-        (
-            (buffer->position == 3)
-            &&
-            (memcmp(buffer->data, data, 3) == 0)
-        ),
-    "Variable length int of 32767 should result in [0xff, 0xff, 0x01]");
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 // UTF-8 String encoding
 
 TestResult test_utf8_string_null(void) {
     char data[] = { 0x00, 0x00 };
-    Buffer *buffer = buffer_allocate(5);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     size_t sz = utf8_string_encode(NULL, buffer);
-    TESTASSERT(
-        (
-            (buffer->position == 2)
-            &&
-            (sz == 2)
-            &&
-            (memcmp(buffer->data, data, 2) == 0)
-        ),
-    "NULL String should result in [0x00, 0x00]");
+
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 TestResult test_utf8_string_empty(void) {
     char data[] = { 0x00, 0x00 };
-    Buffer *buffer = buffer_allocate(5);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     size_t sz = utf8_string_encode("", buffer);
-    TESTASSERT(
-        (
-            (buffer->position == 2)
-            &&
-            (sz == 2)
-            &&
-            (memcmp(buffer->data, data, 2) == 0)
-        ),
-    "Empty String should result in [0x00, 0x00]");    
+
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 TestResult test_utf8_string_hello(void) {
     char data[] = { 0x00, 0x05, 'h', 'e', 'l', 'l', 'o' };
-    Buffer *buffer = buffer_allocate(10);
+    Buffer *buffer = buffer_allocate(sizeof(data));
     size_t sz = utf8_string_encode("hello", buffer);
-    TESTASSERT(
-        (
-            (buffer->position == 7)
-            &&
-            (sz == 7)
-            &&
-            (memcmp(buffer->data, data, 7) == 0)
-        ),
-    "\"hello\" String should result in [0x00, 0x05, 'h', 'e', 'l', 'l', 'o']");
+
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
 
 // make header
@@ -160,16 +130,99 @@ TestResult test_make_header(void) {
     char data[] = { 0x10, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00 };
     Buffer *buffer = make_buffer_for_header(5, PacketTypeConnect);
 
-    TESTASSERT(
-        (
-            (buffer->len == 7)
-            &&
-            (memcmp(buffer->data, data, 7) == 0)
-            &&
-            (buffer->position == 2)
-        ),
-    "Header should be valid");
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        buffer
+    );
 }
+
+TestResult test_encode_connect_simple(void) {
+    char data[] = {
+        0x10, 0x10, // header
+        0x00, 0x04, 'M', 'Q', 'T', 'T', 0x04, 0x02, 0x00, 0x0a, // var header
+        0x00, 0x04, 't', 'e', 's', 't' // client id
+    };
+    ConnectPayload *payload = calloc(1, sizeof(ConnectPayload));
+
+    payload->client_id = "test";
+    payload->protocol_level = 4;
+    payload->keepalive_interval = 10;
+    payload->clean_session = 1;
+
+    Buffer *encoded = encode_connect(payload);
+    free(payload);
+    
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_connect_will(void) {
+    char data[] = {
+        0x10, 0x2d, // header
+        0x00, 0x04, 'M', 'Q', 'T', 'T', 0x04, 0x2e, 0x00, 0x0a, // var header
+        0x00, 0x04, 't', 'e', 's', 't', // client id
+        0x00, 0x0d, 't', 'e', 's', 't', '/', 'l', 'a', 's', 't', 'w', 'i', 'l', 'l',
+        0x00, 0x0c, 'd', 'i', 's', 'c', 'o', 'n', 'n', 'e', 'c', 't', 'e', 'd',
+
+    };
+    ConnectPayload *payload = calloc(1, sizeof(ConnectPayload));
+
+    payload->client_id = "test";
+    payload->protocol_level = 4;
+    payload->keepalive_interval = 10;
+    payload->clean_session = 1;
+
+    payload->will_topic = "test/lastwill";
+    payload->will_message = "disconnected";
+    payload->will_qos = MQTT_QOS_1;
+    payload->retain_will = true;
+
+    Buffer *encoded = encode_connect(payload);
+    free(payload);
+
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+TestResult test_encode_connect_auth(void) {
+    char data[] = {
+        0x10, 0x39, // header
+        0x00, 0x04, 'M', 'Q', 'T', 'T', 0x04, 0xee, 0x00, 0x0a, // var header
+        0x00, 0x04, 't', 'e', 's', 't', // client id
+        0x00, 0x0d, 't', 'e', 's', 't', '/', 'l', 'a', 's', 't', 'w', 'i', 'l', 'l',
+        0x00, 0x0c, 'd', 'i', 's', 'c', 'o', 'n', 'n', 'e', 'c', 't', 'e', 'd',
+        0x00, 0x04, 'a', 'n', 'o', 'n', // username
+        0x00, 0x04, 't', 'e', 's', 't' // password
+    };
+    ConnectPayload *payload = calloc(1, sizeof(ConnectPayload));
+
+    payload->client_id = "test";
+    payload->protocol_level = 4;
+    payload->keepalive_interval = 10;
+    payload->clean_session = 1;
+
+    payload->will_topic = "test/lastwill";
+    payload->will_message = "disconnected";
+    payload->will_qos = MQTT_QOS_1;
+    payload->retain_will = true;
+
+    payload->username = "anon";
+    payload->password = "test";
+
+    Buffer *encoded = encode_connect(payload);
+    free(payload);
+
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
+// not implemented placeholder
 
 TestResult not_implemented(void) {
     TESTRESULT(TestStatusSkipped, "Not implemented");
@@ -192,7 +245,9 @@ TESTS(
     TEST("UTF-8 string encode empty string", test_utf8_string_empty),
     TEST("UTF-8 string encode \"hello\"", test_utf8_string_hello),
     TEST("Make header", test_make_header),
-    TEST("Encode Connect", not_implemented),
+    TEST("Encode Connect simple", test_encode_connect_simple),
+    TEST("Encode Connect with will", test_encode_connect_will),
+    TEST("Encode Connect with auth", test_encode_connect_auth),
     TEST("Encode ConnAck", not_implemented),
     TEST("Encode Publish", not_implemented),
     TEST("Encode PubAck", not_implemented),
