@@ -347,7 +347,9 @@ Buffer *encode_publish(PublishPayload *payload) {
     size_t sz = 0;
     sz += strlen(payload->topic) + 2; // topic
     sz += 2; // packet id
-    sz += strlen(payload->message);
+    if (payload->message) {
+        sz += strlen(payload->message);
+    }
 
     Buffer *buffer = make_buffer_for_header(sz, PacketTypePublish);
 
@@ -357,7 +359,9 @@ Buffer *encode_publish(PublishPayload *payload) {
     buffer->data[buffer->position++] = (payload->packet_id & 0xff);
 
     // Payload
-    buffer_copy_in(payload->message, buffer, strlen(payload->message));
+    if (payload->message) {
+        buffer_copy_in(payload->message, buffer, strlen(payload->message));
+    }
 
     assert(buffer_eof(buffer));
     return buffer; 
