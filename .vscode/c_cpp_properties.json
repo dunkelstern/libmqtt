@@ -5,6 +5,7 @@
             "includePath": [
                 "${workspaceRoot}/src",
                 "${workspaceRoot}/platform",
+                "${workspaceRoot}/tests",
                 "/usr/include"
             ],
             "defines": [
@@ -17,6 +18,7 @@
                     "${workspaceRoot}",
                     "${workspaceRoot}/src",
                     "${workspaceRoot}/platform",
+                    "${workspaceRoot}/tests",
                     "/usr/include"
                 ]
             },
