@@ -14,5 +14,14 @@
         "string_view": "c",
         "packet.h": "c",
         "debug.h": "c"
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/*.o": true,
+        "**/*.a": true
     }
 }

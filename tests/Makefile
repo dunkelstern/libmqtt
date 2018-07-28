@@ -4,7 +4,7 @@ TARGETS=$(SRCS:%.c=%.test)
 
 CC=clang
 CFLAGS=-g -Os -Wall -I.. -I../src -I../platform -DDEBUG=1
-# git -DTIMETRIAL
+# -DTIMETRIAL
 LDFLAGS=
 LIBS=-L.. -lmqtt
 
