@@ -430,7 +430,7 @@ Buffer *encode_pubcomp(PubCompPayload *payload) {
 
 Buffer *encode_subscribe(SubscribePayload *payload) {
     size_t sz = 2; // packet id
-    sz += strlen(payload->topic); // topic
+    sz += strlen(payload->topic) + 2; // topic
     sz += 1; // qos level
 
     Buffer *buffer = make_buffer_for_header(sz, PacketTypeSubscribe);
