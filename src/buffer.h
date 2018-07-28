@@ -143,6 +143,7 @@ static inline Buffer *buffer_from_data_no_copy(char *data, size_t len) {
 static inline Buffer *buffer_from_data_copy(char *data, size_t len) {
     Buffer *buffer = buffer_allocate(len);
     (void)buffer_copy_in(data, buffer, len);
+    buffer->position = 0;
     return buffer;
 }
 
