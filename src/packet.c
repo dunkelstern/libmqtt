@@ -62,14 +62,15 @@ void free_MQTTPacket(MQTTPacket *packet) {
 
 
 uint16_t variable_length_int_decode(Buffer *buffer) {
-    uint16_t result = 0;
-    while (buffer->data[buffer->position] & 0x80) {
-        result *= 128;
-        result += buffer->data[buffer->position] & 0x7f;
-        buffer->position++;
+    uint16_t result = buffer->data[buffer->position++] & 0x7f;
+    uint16_t shift = 7;
+    while (buffer->data[buffer->position - 1] & 0x80) {
+        result += (buffer->data[buffer->position] & 0x7f) << shift;
+        shift += 7;
         if (buffer_eof(buffer)) {
             break; // bail out, buffer exhausted
         }
+        buffer->position++;
     }
 
     return result;
@@ -87,8 +88,9 @@ char *utf8_string_decode(Buffer *buffer) {
     }
     buffer->position += 2;
 
-    result = malloc(sz);
+    result = malloc(sz + 1);
     buffer_copy_out(buffer, result, sz);
+    result[sz] = '\0';
     return result;
 }
 
