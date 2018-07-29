@@ -5,6 +5,12 @@
 
 typedef void (*Reader)(MQTTHandle *handle);
 
+/** maximum receiver buffer size, defined by platform */
+extern const size_t max_receive_buffer_size;
+
+
+bool hostname_to_ip(char *hostname, char *ip);
+
 /**
  * Initialize platform specific data
  * 
