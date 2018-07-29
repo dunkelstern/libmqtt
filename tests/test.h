@@ -64,6 +64,13 @@ static inline TestResult TESTMEMCMP(Buffer *template, Buffer *check) {
     }
 }
 
+// not implemented placeholder
+
+static TestResult not_implemented(void) {
+    TESTRESULT(TestStatusSkipped, "Not implemented");
+}
+
+
 void timetrial(DefinedTest *test);
 
 int main(int argc, char **argv) {

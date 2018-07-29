@@ -1,21 +1,38 @@
 SRCS=src/mqtt.c src/packet.c src/protocol.c src/debug.c platform/linux.c
 OBJS=$(SRCS:%.c=%.o)
+DEBUG_OBJS=$(SRCS:%.c=%.do)
+COVERAGE_FILES=$(SRCS:%.c=%.gcno) $(SRCS:%.c=%.gcda)
 
 TARGET=libmqtt.a
+DEBUG_TARGET=libmqtt-debug.a
 
-PLATFORM_FLAGS=-DMAX_BUFFER_SIZE=256 -DDEBUG=1
+PLATFORM_FLAGS=
 
 AR=ar
-CC=clang
+CC=gcc
 CFLAGS=-g -Os -Wall -pthread -I./platform -I./src $(PLATFORM_FLAGS)
+COVERAGE_FLAGS=-fprofile-arcs -ftest-coverage
+DEBUG_FLAGS=-DDEBUG=1 $(COVERAGE_FLAGS)
 
-all: $(TARGET)
+all: $(TARGET) $(DEBUG_TARGET)
 
-test: $(TARGET)
+test: $(DEBUG_TARGET)
 	$(MAKE) -C tests
+
+coverage: test
+	lcov --capture --directory . --output-file lcov.info
+	rm -rf coverage
+	mkdir -p coverage
+	genhtml -o coverage lcov.info
 
 $(TARGET): $(OBJS)
 	$(AR) -cr $(TARGET) $(OBJS)
+
+$(DEBUG_TARGET): $(DEBUG_OBJS)
+	$(AR) -cr $(DEBUG_TARGET) $(DEBUG_OBJS)
+
+%.do: %.c
+	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o $@ -c $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -24,6 +41,9 @@ mqtt.o: mqtt.h
 
 clean:
 	$(MAKE) -C tests clean
-	rm -f $(TARGET)
-	rm -f $(OBJS)
+	rm -f $(TARGET) $(DEBUG_TARGET)
+	rm -f $(OBJS) $(DEBUG_OBJS)
+	rm -f $(COVERAGE_FILES)
+	rm -f *.gcov
+	rm -f lcov.info
 	rm -rf docs/

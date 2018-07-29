@@ -168,7 +168,10 @@ bool decode_connect(Buffer *buffer, ConnectPayload *payload) {
     payload->protocol_level = buffer->data[buffer->position++];
     uint8_t flags = buffer->data[buffer->position++];
     payload->clean_session = ((flags & 0x02) > 0);
-    payload->keepalive_interval = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->keepalive_interval = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
     payload->client_id = utf8_string_decode(buffer);
     
     // last will
@@ -208,7 +211,10 @@ bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
     payload->duplicate = ((flags & 0x08) > 0);
 
     payload->topic = utf8_string_decode(buffer);
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->packet_id =
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
 
     size_t len = sz - (buffer->position - start_pos) + 1;
     if (len > 1) {
@@ -222,31 +228,46 @@ bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
 }
 
 bool decode_puback(Buffer *buffer, PubAckPayload *payload) {
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
-
+    payload->packet_id = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
     return true;
 }
 
 bool decode_pubrec(Buffer *buffer, PubRecPayload *payload) {
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->packet_id = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
 
     return true;    
 }
 
 bool decode_pubrel(Buffer *buffer, PubRelPayload *payload) {
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->packet_id = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
 
     return true;
 }
 
 bool decode_pubcomp(Buffer *buffer, PubCompPayload *payload) {
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->packet_id = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
 
     return true;
 }
 
 bool decode_subscribe(Buffer *buffer, SubscribePayload *payload) {
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->packet_id = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
+
     payload->topic = utf8_string_decode(buffer);
     payload->qos = buffer->data[buffer->position++] & 0x03;
 
@@ -254,21 +275,32 @@ bool decode_subscribe(Buffer *buffer, SubscribePayload *payload) {
 }
 
 bool decode_suback(Buffer *buffer, SubAckPayload *payload) {
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->packet_id = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
+
     payload->status = buffer->data[buffer->position++];
 
     return true;
 }
 
 bool decode_unsubscribe(Buffer *buffer, UnsubscribePayload *payload) {
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->packet_id = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
+
     payload->topic = utf8_string_decode(buffer);
 
     return true;
 }
 
 bool decode_unsuback(Buffer *buffer, UnsubAckPayload *payload) {
-    payload->packet_id = (buffer->data[buffer->position++] << 8) + buffer->data[buffer->position++];
+    payload->packet_id = 
+        (buffer->data[buffer->position] << 8) 
+        + buffer->data[buffer->position + 1];
+    buffer->position += 2;
 
     return true;
 }
@@ -614,4 +646,6 @@ Buffer *mqtt_packet_encode(MQTTPacket *packet) {
         case PacketTypeDisconnect:
             return encode_disconnect();
     }
+
+    return NULL;
 }

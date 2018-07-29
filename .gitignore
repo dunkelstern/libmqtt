@@ -1,2 +1,8 @@
 *.o
 *.a
+*.do
+*.gcno
+*.gcda
+*.gcov
+coverage/
+*.test

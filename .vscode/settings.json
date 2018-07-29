@@ -22,6 +22,10 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/*.o": true,
+        "**/*.do": true,
+        "**/*.gcno": true,
+        "**/*.gcda": true,
+        "**/*.gcov": true,
         "**/*.a": true
     }
 }

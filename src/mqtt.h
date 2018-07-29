@@ -7,13 +7,13 @@
 typedef struct _MQTTHandle MQTTHandle;
 
 typedef struct {
-    char *hostname; /**< Hostname to connect to, will do DNS resolution */
-    uint16_t port;  /**< Port the broker listens on, set to 0 for 1883 default */
+    char *hostname;  /**< Hostname to connect to, will do DNS resolution */
+    uint16_t port;   /**< Port the broker listens on, set to 0 for 1883 default */
 
-    char *clientID; /**< Client identification */
+    char *client_id; /**< Client identification */
 
-    char *username; /**< User name, set to NULL to connect anonymously */
-    char *password; /**< Password, set to NULL to connect without password */
+    char *username;  /**< User name, set to NULL to connect anonymously */
+    char *password;  /**< Password, set to NULL to connect without password */
 } MQTTConfig;
 
 typedef enum {
@@ -36,8 +36,11 @@ typedef enum {
     MQTT_Error_Connection_Reset        /**< Network connection reset, perhaps network went down? */
 } MQTTErrorCode;
 
-/** Error handler callback */
-typedef void (*MQTTErrorHandler)(MQTTHandle *handle, MQTTErrorCode code);
+/** Error handler callback
+ * 
+ * Return true if the handle should be freed, false to keep it
+ */
+typedef bool (*MQTTErrorHandler)(MQTTHandle *handle, MQTTErrorCode code);
 
 /** Event handler callback */
 typedef void (*MQTTEventHandler)(MQTTHandle *handle, char *topic, char *payload);
@@ -48,6 +51,10 @@ typedef void (*MQTTEventHandler)(MQTTHandle *handle, char *topic, char *payload)
  * @param config: MQTT configuration
  * @param callback: Callback function to call on errors
  * @returns handle to mqtt connection or NULL on error
+ * 
+ * If the error handler is called with Host not found or Connection refused,
+ * the handler is in charge of freeing the handle by returning true
+ * or re-trying by changing settings and calling mqtt_reconnect() and returning false
  */
 MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTErrorHandler callback);
 

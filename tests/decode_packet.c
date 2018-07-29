@@ -101,6 +101,21 @@ TestResult test_decode_connect_simple(void) {
     TEST_OK();
 }
 
+TestResult test_decode_connect_invalid(void) {
+    char data[] = {
+        0x10, 0x10, // header
+        0x00, 0x04, 'M', 'Q', 'T', 'X', 0x04, 0x02, 0x00, 0x0a, // var header
+        0x00, 0x04, 't', 'e', 's', 't' // client id
+    };
+    Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
+    MQTTPacket *packet = mqtt_packet_decode(buffer);
+
+    TESTASSERT(packet == NULL, "Packet should not be valid");
+    buffer_release(buffer);
+
+    TEST_OK();
+}
+
 TestResult test_decode_connect_will(void) {
     char data[] = {
         0x10, 0x2d, // header
@@ -458,13 +473,6 @@ TestResult test_decode_disconnect(void) {
     TEST_OK();
 }
 
-// not implemented placeholder
-
-TestResult not_implemented(void) {
-    TESTRESULT(TestStatusSkipped, "Not implemented");
-}
-
-
 TESTS(
     TEST("Variable length int decode for 0", test_vl_int_data_0),
     TEST("Variable length int decode for 127", test_vl_int_data_127),
@@ -475,6 +483,7 @@ TESTS(
     TEST("UTF-8 string decode empty string", test_utf8_string_empty),
     TEST("UTF-8 string decode \"hello\"", test_utf8_string_hello),
     TEST("Decode Connect simple", test_decode_connect_simple),
+    TEST("Decode Connect invalid", test_decode_connect_invalid),
     TEST("Decode Connect with will", test_decode_connect_will),
     TEST("Decode Connect with auth", test_decode_connect_auth),
     TEST("Decode ConnAck", test_decode_connack),

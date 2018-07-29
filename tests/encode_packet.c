@@ -276,7 +276,7 @@ TestResult test_encode_publish_no_msg(void) {
 
 TestResult test_encode_publish_with_msg(void) {
     char data[] = {
-        0x33, 0x15, // header, qos1, retain
+        0x3b, 0x15, // header, qos1, retain
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
         0x00, 0x0a, // packet id
         'p', 'a', 'y', 'l', 'o', 'a', 'd'
@@ -285,6 +285,7 @@ TestResult test_encode_publish_with_msg(void) {
 
     payload->qos = MQTT_QOS_1;
     payload->retain = true;
+    payload->duplicate = true;
     payload->topic = "test/topic";
     payload->packet_id = 10;
     payload->message = "payload";
@@ -488,13 +489,6 @@ TestResult test_encode_disconnect(void) {
         encoded
     );
 }
-
-// not implemented placeholder
-
-TestResult not_implemented(void) {
-    TESTRESULT(TestStatusSkipped, "Not implemented");
-}
-
 
 TESTS(
     TEST("Variable length int size for 0", test_vl_int_0),

@@ -6,8 +6,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
+#include <errno.h>
 
-#define DEBUG_LOG(fmt, ...) fprintf(stderr, fmt "\n", ## __VA_ARGS__);
+#define DEBUG_LOG(fmt, ...) fprintf(stderr, "%s:%d: " fmt "\n", __FILE__, __LINE__, ## __VA_ARGS__);
 
 static inline void hexdump(char *data, size_t len, int indent) {
     for (int i = 0; i < len;) {
