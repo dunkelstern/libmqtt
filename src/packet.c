@@ -427,7 +427,9 @@ Buffer *encode_connack(ConnAckPayload *payload) {
 Buffer *encode_publish(PublishPayload *payload) {
     size_t sz = 0;
     sz += strlen(payload->topic) + 2; // topic
-    sz += 2; // packet id
+    if (payload->qos != MQTT_QOS_0) {
+        sz += 2; // packet id
+    }
     if (payload->message) {
         sz += strlen(payload->message);
     }
@@ -450,8 +452,10 @@ Buffer *encode_publish(PublishPayload *payload) {
 
     // Variable header
     utf8_string_encode(payload->topic, buffer);
-    buffer->data[buffer->position++] = (payload->packet_id & 0xff00) >> 8;
-    buffer->data[buffer->position++] = (payload->packet_id & 0xff);
+    if (payload->qos != MQTT_QOS_0) {
+        buffer->data[buffer->position++] = (payload->packet_id & 0xff00) >> 8;
+        buffer->data[buffer->position++] = (payload->packet_id & 0xff);
+    }
 
     // Payload
     if (payload->message) {

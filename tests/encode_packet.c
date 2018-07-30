@@ -314,6 +314,30 @@ TestResult test_encode_publish_with_msg(void) {
     );
 }
 
+TestResult test_encode_publish_with_msg_qos0(void) {
+    char data[] = {
+        0x31, 0x13, // header, qos1, retain
+        0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
+        'p', 'a', 'y', 'l', 'o', 'a', 'd'
+    };
+    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+
+    payload->qos = MQTT_QOS_0;
+    payload->retain = true;
+    payload->duplicate = false;
+    payload->topic = "test/topic";
+    payload->packet_id = 10;
+    payload->message = "payload";
+
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
+    free(payload);
+
+    return TESTMEMCMP(
+        buffer_from_data_copy(data, sizeof(data)),
+        encoded
+    );
+}
+
 TestResult test_encode_puback(void) {
     char data[] = {
         0x40, 0x02, // header
@@ -528,6 +552,7 @@ TESTS(
     TEST("Encode Publish with no message", test_encode_publish_no_msg),
     TEST("Encode Publish with invalid flags", test_encode_publish_dup_qos0),
     TEST("Encode Publish with message", test_encode_publish_with_msg),
+    TEST("Encode Publish with message on QoS 0", test_encode_publish_with_msg_qos0),
     TEST("Encode PubAck", test_encode_puback),
     TEST("Encode PubRec", test_encode_pubrec),
     TEST("Encode PubRel", test_encode_pubrel),
