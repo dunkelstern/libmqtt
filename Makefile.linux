@@ -10,16 +10,21 @@ PLATFORM_FLAGS=
 
 AR=ar
 CC=gcc
-CFLAGS=-g -Os -Wall -pthread -I./platform -I./src $(PLATFORM_FLAGS)
+EXTRA_CFLAGS=
+CFLAGS=-g -Os -Wall -pthread -I./platform -I./src $(EXTRA_CFLAGS) $(PLATFORM_FLAGS)
 COVERAGE_FLAGS=-fprofile-arcs -ftest-coverage
 DEBUG_FLAGS=-DDEBUG=1 $(COVERAGE_FLAGS)
 
 all: $(TARGET) $(DEBUG_TARGET)
 
-test: $(DEBUG_TARGET)
+test:
+	$(MAKE) EXTRA_CFLAGS="-DMQTT_SERVER=1 -DMQTT_CLIENT=1" clean all
 	$(MAKE) -C tests
+	$(MAKE) clean
 
-coverage: test
+coverage: 
+	$(MAKE) EXTRA_CFLAGS="-DMQTT_SERVER=1 -DMQTT_CLIENT=1" clean all
+	$(MAKE) DEBUG_FLAGS= -C tests clean all
 	lcov --capture --directory . --output-file lcov.info
 	rm -rf coverage
 	mkdir -p coverage
@@ -45,5 +50,7 @@ clean:
 	rm -f $(OBJS) $(DEBUG_OBJS)
 	rm -f $(COVERAGE_FILES)
 	rm -f *.gcov
-	rm -f lcov.info
 	rm -rf docs/
+	rm -rf coverage/
+
+.PHONY: coverage test

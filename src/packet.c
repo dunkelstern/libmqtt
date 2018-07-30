@@ -149,6 +149,7 @@ size_t utf8_string_encode(char *string, Buffer *buffer) {
  * Decoder
  */
 
+#if MQTT_SERVER
 bool decode_connect(Buffer *buffer, ConnectPayload *payload) {
     // Validate this is actually a connect packet
     char template[] = { 0x00, 0x04, 'M', 'Q', 'T', 'T' };
@@ -186,6 +187,7 @@ bool decode_connect(Buffer *buffer, ConnectPayload *payload) {
 
     return true;
 }
+#endif /* MQTT_SERVER */
 
 bool decode_connack(Buffer *buffer, ConnAckPayload *payload) {
     payload->session_present = buffer->data[buffer->position++] & 0x01;
@@ -227,6 +229,7 @@ bool decode_packet_id(Buffer *buffer, PacketIDPayload *payload) {
     return true;
 }
 
+#if MQTT_SERVER
 bool decode_subscribe(Buffer *buffer, SubscribePayload *payload) {
     payload->packet_id =
         (buffer->data[buffer->position] << 8)
@@ -238,6 +241,7 @@ bool decode_subscribe(Buffer *buffer, SubscribePayload *payload) {
 
     return true;
 }
+#endif /* MQTT_SERVER */
 
 bool decode_suback(Buffer *buffer, SubAckPayload *payload) {
     payload->packet_id =
@@ -250,6 +254,7 @@ bool decode_suback(Buffer *buffer, SubAckPayload *payload) {
     return true;
 }
 
+#if MQTT_SERVER
 bool decode_unsubscribe(Buffer *buffer, UnsubscribePayload *payload) {
     payload->packet_id =
         (buffer->data[buffer->position] << 8)
@@ -260,6 +265,7 @@ bool decode_unsubscribe(Buffer *buffer, UnsubscribePayload *payload) {
 
     return true;
 }
+#endif /* MQTT_SERVER */
 
 
 MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
@@ -275,23 +281,14 @@ MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
 
     bool valid = false;
     switch (type) {
-        case PacketTypeConnect:
-            valid = decode_connect(buffer, result->payload);
-            break;
         case PacketTypeConnAck:
             valid = decode_connack(buffer, result->payload);
             break;
         case PacketTypePublish:
             valid = decode_publish(buffer, result->payload, packet_size);
             break;
-        case PacketTypeSubscribe:
-            valid = decode_subscribe(buffer, result->payload);
-            break;
         case PacketTypeSubAck:
             valid = decode_suback(buffer, result->payload);
-            break;
-        case PacketTypeUnsubscribe:
-            valid = decode_unsubscribe(buffer, result->payload);
             break;
         case PacketTypePubAck:
         case PacketTypePubRec:
@@ -300,10 +297,28 @@ MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
         case PacketTypeUnsubAck:
             valid = decode_packet_id(buffer, result->payload);
             break;
-        case PacketTypePingReq:
         case PacketTypePingResp:
         case PacketTypeDisconnect:
             valid = true; // there is no payload
+            break;
+
+#if MQTT_SERVER
+        case PacketTypePingReq:
+            valid = true; // there is no payload
+            break;
+        case PacketTypeConnect:
+            valid = decode_connect(buffer, result->payload);
+            break;
+        case PacketTypeSubscribe:
+            valid = decode_subscribe(buffer, result->payload);
+            break;
+        case PacketTypeUnsubscribe:
+            valid = decode_unsubscribe(buffer, result->payload);
+            break;
+#endif /* MQTT_SERVER */
+
+        default:
+            valid = false;
             break;
     }
 
@@ -396,6 +411,7 @@ Buffer *encode_connect(ConnectPayload *payload) {
     return buffer;
 }
 
+#if MQTT_SERVER
 Buffer *encode_connack(ConnAckPayload *payload) {
     size_t sz = 2; // session flag and status
 
@@ -406,6 +422,7 @@ Buffer *encode_connack(ConnAckPayload *payload) {
     assert(buffer_eof(buffer));
     return buffer;
 }
+#endif /* MQTT_SERVER */
 
 Buffer *encode_publish(PublishPayload *payload) {
     size_t sz = 0;
@@ -477,6 +494,7 @@ Buffer *encode_subscribe(SubscribePayload *payload) {
     return buffer;
 }
 
+#if MQTT_SERVER
 Buffer *encode_suback(SubAckPayload *payload) {
     size_t sz = 2; // packet id
     sz += 1; // Status code
@@ -493,6 +511,7 @@ Buffer *encode_suback(SubAckPayload *payload) {
     assert(buffer_eof(buffer));
     return buffer;
 }
+#endif /* MQTT_SERVER */
 
 Buffer *encode_unsubscribe(UnsubscribePayload *payload) {
     size_t sz = 2; // packet id
@@ -522,29 +541,35 @@ Buffer *mqtt_packet_encode(MQTTPacket *packet) {
     switch (packet->packet_type) {
         case PacketTypeConnect:
             return encode_connect((ConnectPayload *)packet->payload);
-        case PacketTypeConnAck:
-            return encode_connack((ConnAckPayload *)packet->payload);
         case PacketTypePublish:
             return encode_publish((PublishPayload *)packet->payload);
         case PacketTypeSubscribe:
             return encode_subscribe((SubscribePayload *)packet->payload);
-        case PacketTypeSubAck:
-            return encode_suback((SubAckPayload *)packet->payload);
         case PacketTypeUnsubscribe:
             return encode_unsubscribe((UnsubscribePayload *)packet->payload);
         case PacketTypePubAck:
         case PacketTypePubRec:
         case PacketTypePubRel:
         case PacketTypePubComp:
-        case PacketTypeUnsubAck:
             return encode_packet_id((PacketIDPayload *)packet->payload, packet->packet_type);
         case PacketTypePingReq:
-        case PacketTypePingResp:
         case PacketTypeDisconnect:
             return encode_no_payload(packet->packet_type);
-    }
 
-    return NULL;
+#if MQTT_SERVER
+        case PacketTypePingResp:
+            return encode_no_payload(packet->packet_type);
+        case PacketTypeUnsubAck:
+            return encode_packet_id((PacketIDPayload *)packet->payload, packet->packet_type);
+        case PacketTypeConnAck:
+            return encode_connack((ConnAckPayload *)packet->payload);
+        case PacketTypeSubAck:
+            return encode_suback((SubAckPayload *)packet->payload);
+#endif /* MQTT_SERVER */
+
+        default:
+            return NULL;
+    }
 }
 
 /*

@@ -1,6 +1,17 @@
 #ifndef mqtt_h__included
 #define mqtt_h__included
 
+// re-define to 1 to enable server functionality
+#ifndef MQTT_SERVER
+# define MQTT_SERVER 0
+#endif
+
+// re-rdefine to 0 to disable client functionality
+#ifndef MQTT_CLIENT
+# define MQTT_CLIENT 1
+#endif
+
+
 #include <stdint.h>
 #include <stdbool.h>
 

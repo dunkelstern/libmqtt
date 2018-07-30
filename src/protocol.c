@@ -20,6 +20,7 @@ bool send_buffer(MQTTHandle *handle, Buffer *buffer) {
     return true;
 }
 
+#if MQTT_CLIENT
 bool send_connect_packet(MQTTHandle *handle) {
     ConnectPayload *payload = calloc(1, sizeof(ConnectPayload));
 
@@ -44,6 +45,7 @@ bool send_connect_packet(MQTTHandle *handle) {
     encoded->position = 0;
     return send_buffer(handle, encoded);
 }
+#endif /* MQTT_CLIENT */
 
 void remove_pending(MQTTHandle *handle, void *context) {
     SubscribePayload *payload = (SubscribePayload *)context;
@@ -54,6 +56,7 @@ void remove_pending(MQTTHandle *handle, void *context) {
     free(payload);
 }
 
+#if MQTT_CLIENT
 bool send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
     SubscribePayload *payload = calloc(1, sizeof(SubscribePayload));
 
@@ -69,7 +72,9 @@ bool send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
     encoded->position = 0;
     return send_buffer(handle, encoded);
 }
+#endif /* MQTT_CLIENT */
 
+#if MQTT_CLIENT
 bool send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
     UnsubscribePayload *payload = calloc(1, sizeof(UnsubscribePayload));
 
@@ -85,6 +90,7 @@ bool send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
     encoded->position = 0;
     return send_buffer(handle, encoded);
 }
+#endif /* MQTT_CLIENT */
 
 void handle_pubrec(MQTTHandle *handle, void *context) {
     PublishPayload *payload = (PublishPayload *)context;
@@ -132,8 +138,10 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
     return send_buffer(handle, encoded);
 }
 
+#if MQTT_CLIENT
 bool send_disconnect_packet(MQTTHandle *handle) {
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeDisconnect, NULL });
     encoded->position = 0;
     return send_buffer(handle, encoded);
 }
+#endif /* MQTT_CLIENT */
