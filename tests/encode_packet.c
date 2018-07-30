@@ -161,7 +161,7 @@ TestResult test_encode_connect_simple(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeConnect, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -245,7 +245,7 @@ TestResult test_encode_connack(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeConnAck, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -267,7 +267,7 @@ TestResult test_encode_publish_no_msg(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -292,7 +292,7 @@ TestResult test_encode_publish_with_msg(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -310,7 +310,7 @@ TestResult test_encode_puback(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubAck, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -328,7 +328,7 @@ TestResult test_encode_pubrec(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRec, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -346,7 +346,7 @@ TestResult test_encode_pubrel(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRel, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -364,7 +364,7 @@ TestResult test_encode_pubcomp(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubComp, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -386,7 +386,7 @@ TestResult test_encode_subscribe(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeSubscribe, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -406,7 +406,7 @@ TestResult test_encode_suback(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeSubAck, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -426,7 +426,7 @@ TestResult test_encode_unsubscribe(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeUnsubscribe, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -444,7 +444,7 @@ TestResult test_encode_unsuback(void) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeUnsubAck, payload });
     free(payload);
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -457,7 +457,7 @@ TestResult test_encode_pingreq(void) {
     };
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePingReq, NULL });
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -470,7 +470,7 @@ TestResult test_encode_pingresp(void) {
     };
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePingResp, NULL });
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
@@ -483,7 +483,7 @@ TestResult test_encode_disconnect(void) {
     };
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeDisconnect, NULL });
-    
+
     return TESTMEMCMP(
         buffer_from_data_copy(data, sizeof(data)),
         encoded
