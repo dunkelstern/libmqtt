@@ -57,7 +57,7 @@ void remove_pending(MQTTHandle *handle, void *context) {
 bool send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
     SubscribePayload *payload = calloc(1, sizeof(SubscribePayload));
 
-    payload->packet_id = handle->packet_id_counter++;
+    payload->packet_id = (++handle->packet_id_counter > 0) ? handle->packet_id_counter : ++handle->packet_id_counter;
     payload->topic = strdup(topic);
     payload->qos = qos;
 
@@ -108,7 +108,7 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
     payload->qos = qos;
     payload->retain = true;
     payload->topic = topic;
-    payload->packet_id = handle->packet_id_counter++;
+    payload->packet_id = (++handle->packet_id_counter > 0) ? handle->packet_id_counter : ++handle->packet_id_counter;
     payload->message = message;
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
