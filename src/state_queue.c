@@ -56,7 +56,7 @@ static uint16_t get_packet_id(MQTTPacket *packet) {
     }
 }
 
-static inline void remove_from_queue(MQTTHandle *handle, MQTTCallbackQueueItem *remove) {
+void remove_from_queue(MQTTHandle *handle, MQTTCallbackQueueItem *remove) {
     MQTTCallbackQueueItem *item = handle->queue.pending;
     MQTTCallbackQueueItem *prev_item = NULL;
 

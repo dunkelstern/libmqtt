@@ -7,7 +7,7 @@
 
 #include "debug.h"
 
-static bool send_buffer(MQTTHandle *handle, Buffer *buffer) {
+bool send_buffer(MQTTHandle *handle, Buffer *buffer) {
     while (!buffer_eof(buffer)) {
         ssize_t bytes = write(handle->sock, buffer->data + buffer->position, buffer_free_space(buffer));
         if (bytes <= 0) {
