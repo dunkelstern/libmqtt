@@ -1,44 +1,47 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "mqtt.h"
+
+bool leave = false;
 
 #define LOG(fmt, ...) fprintf(stdout, fmt "\n", ## __VA_ARGS__)
 
 bool err_handler(MQTTHandle *handle, MQTTErrorCode error) {
     LOG("Error received: %d", error);
-    
+
     return 1;
 }
 
-bool leave = false;
 void callback(MQTTHandle *handle, char *topic, char *payload) {
     LOG("Received publish: %s -> %s", topic, payload);
     leave = true;
 }
 
+void mqtt_connected(MQTTHandle *handle, void *context) {
+    LOG("Connected!");
+
+    LOG("Trying subscribe on testsuite/mqtt/test...");
+    MQTTStatus result = mqtt_subscribe(handle, "testsuite/mqtt/test", callback);
+    if (result != MQTT_STATUS_OK) {
+        LOG("Could not subscribe");
+        exit(1);
+    }
+}
+
 int main(int argc, char **argv) {
-    MQTTConfig config;
+    MQTTConfig config = { 0 };
 
     config.client_id = "libmqtt_testsuite";
-    config.hostname = "test.mosquitto.org";
+    config.hostname = "localhost";
     config.port = 1883;
 
-    LOG("Trying to connect to test.mosquitto.org");
-    MQTTHandle *mqtt = mqtt_connect(&config, err_handler);
+    LOG("Trying to connect to %s...", config.hostname);
+    MQTTHandle *mqtt = mqtt_connect(&config, mqtt_connected, NULL, err_handler);
 
     if (mqtt == NULL) {
         LOG("Connection failed!");
-        return 1;
-    }
-    LOG("Connected!");
-    
-    sleep(5);
-
-    LOG("Trying subscribe on testsuite/mqtt/test...");
-    MQTTStatus result = mqtt_subscribe(mqtt, "testsuite/mqtt/test", callback);
-    if (result != MQTT_STATUS_OK) {
-        LOG("Could not publish");
         return 1;
     }
 
@@ -48,6 +51,5 @@ int main(int argc, char **argv) {
     }
 
     LOG("Disconnecting...");
-    mqtt_disconnect(mqtt);
-    return 0;
+    mqtt_disconnect(mqtt, NULL, NULL);
 }
