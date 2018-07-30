@@ -205,16 +205,17 @@ bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
     payload->duplicate = ((flags & 0x08) > 0);
 
     payload->topic = utf8_string_decode(buffer);
-    payload->packet_id =
-        (buffer->data[buffer->position] << 8)
-        + buffer->data[buffer->position + 1];
-    buffer->position += 2;
-
+    if (payload->qos != MQTT_QOS_0) {
+        payload->packet_id =
+            (buffer->data[buffer->position] << 8)
+            + buffer->data[buffer->position + 1];
+        buffer->position += 2;
+    }
+    
     size_t len = sz - (buffer->position - start_pos) + 1;
     if (len > 1) {
-        payload->message = malloc(len);
+        payload->message = calloc(1, len);
         memcpy(payload->message, buffer->data + buffer->position, len - 1);
-        payload->message[len] = '\0';
         buffer->position += len - 1;
     }
 
