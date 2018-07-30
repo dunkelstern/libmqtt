@@ -40,14 +40,22 @@ void mqtt_connected(MQTTHandle *handle, void *context) {
 int main(int argc, char **argv) {
     MQTTConfig config = { 0 };
 
-    config.client_id = "libmqtt_testsuite";
+    config.client_id = "libmqtt_testsuite_this_is_too_long";
     config.hostname = "localhost";
 
     config.last_will_topic = "testsuite/last_will";
     config.last_will_message = "RIP";
 
-    LOG("Trying to connect to %s", config.hostname);
+    LOG("Testing too long client id...");
     MQTTHandle *mqtt = mqtt_connect(&config, mqtt_connected, NULL, err_handler);
+    if (mqtt != NULL) {
+        LOG("Handle should be NULL, but it wasn't");
+        return 1;
+    }    
+
+    config.client_id = "libmqtt_testsuite";
+    LOG("Trying to connect to %s", config.hostname);
+    mqtt = mqtt_connect(&config, mqtt_connected, NULL, err_handler);
 
     if (mqtt == NULL) {
         LOG("Connection failed!");

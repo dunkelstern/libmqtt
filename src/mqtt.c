@@ -183,6 +183,12 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
 }
 
 MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *context, MQTTErrorHandler error_callback) {
+    // sanity check
+    if ((config->client_id != NULL) && (strlen(config->client_id) > 23)) {
+        DEBUG_LOG("Client ID has to be shorter than 24 characters");
+        return NULL;
+    }
+
     MQTTHandle *handle = calloc(sizeof(struct _MQTTHandle), 1);
     initialize_platform(handle);
 
