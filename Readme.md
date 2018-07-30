@@ -13,11 +13,11 @@ MQTT library for multiple platforms including embedded targets.
 - All packet types are implemented
 - Supports MQTT 3.1.1 (aka. protocol level 4)
 - Platform support for linux is working
-- Test have a coverage of about 87% (lines) and 94% (functions), there is room for improvement when QoS Testing is implemented
+- Test have a coverage of about 92% (lines) and 97% (functions), untested code is just bail-out error handling for fatal errors (usually programming errors or network failure)
 
 ## TODO
 
-- [ ] QoS testing, client -> server QoS partly works, server -> client does not
+- [ ] QoS testing, server -> client does not
 - [ ] Running in MQTT Broker mode
 - [ ] Implement Protocol level 3 (low prio)
 - [ ] Implement Draft Protocol level 5 (somewhat low prio as it's a draft spec)
