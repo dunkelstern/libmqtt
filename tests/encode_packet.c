@@ -275,11 +275,6 @@ TestResult test_encode_publish_no_msg(void) {
 }
 
 TestResult test_encode_publish_dup_qos0(void) {
-    char data[] = {
-        0x33, 0x0e, // header, qos1, retain
-        0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
-        0x00, 0x0a // packet id
-    };
     PublishPayload *payload = calloc(1, sizeof(PublishPayload));
 
     payload->qos = MQTT_QOS_0;
