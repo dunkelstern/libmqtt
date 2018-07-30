@@ -15,8 +15,8 @@ all: $(TARGETS)
 
 %.test: %.o cputime.o
 	$(CC) $(COVERAGE_FLAGS) $(LDFLAGS) -o $@ cputime.o $< $(LIBS)
-	# ./$@
-	# rm $@
+	./$@
+	rm $@
 
 %.o: %.c test.h
 	$(CC) $(CFLAGS) -o $@ -c $<
