@@ -42,7 +42,9 @@ int main(int argc, char **argv) {
 
     config.client_id = "libmqtt_testsuite";
     config.hostname = "localhost";
-    config.port = 1883;
+
+    config.last_will_topic = "testsuite/last_will";
+    config.last_will_message = "RIP";
 
     LOG("Trying to connect to %s", config.hostname);
     MQTTHandle *mqtt = mqtt_connect(&config, mqtt_connected, NULL, err_handler);
