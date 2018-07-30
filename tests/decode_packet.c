@@ -89,6 +89,8 @@ TestResult test_decode_connect_simple(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypeConnect, "Should be connect packet");
 
+    TESTASSERT(strcmp("CONNECT", get_packet_name(packet)) == 0, "Packet name");
+
     ConnectPayload *payload = (ConnectPayload *)packet->payload;
     TESTASSERT(strncmp("test", payload->client_id, 4) == 0, "Client id should be 'test'");
     TESTASSERT(payload->protocol_level == 4, "Protocol level should be 4");
@@ -196,6 +198,8 @@ TestResult test_decode_connack(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypeConnAck, "Should be connack packet");
 
+    TESTASSERT(strcmp("CONNACK", get_packet_name(packet)) == 0, "Packet name");
+
     ConnAckPayload *payload = (ConnAckPayload *)packet->payload;
     TESTASSERT(payload->session_present == true, "Session should be present");
     TESTASSERT(payload->status == ConnAckStatusAccepted, "Connection status should be accepted");
@@ -218,10 +222,13 @@ TestResult test_decode_publish_no_msg(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypePublish, "Should be publish packet");
 
+    TESTASSERT(strcmp("PUBLISH", get_packet_name(packet)) == 0, "Packet name");
+
     PublishPayload *payload = (PublishPayload *)packet->payload;
     TESTASSERT(payload->qos == MQTT_QOS_1, "QoS should be 1");
     TESTASSERT(payload->retain == true, "Retain should be true");
     TESTASSERT(payload->packet_id == 10, "Packet ID should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
     TESTASSERT(strncmp("test/topic", payload->topic, 11) == 0, "Topic should match");
     TESTASSERT(payload->message == NULL, "Message should be NULL");
 
@@ -248,6 +255,7 @@ TestResult test_decode_publish_with_msg(void) {
     TESTASSERT(payload->qos == MQTT_QOS_1, "QoS should be 1");
     TESTASSERT(payload->retain == true, "Retain should be true");
     TESTASSERT(payload->packet_id == 10, "Packet ID should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
     TESTASSERT(strncmp("test/topic", payload->topic, 11) == 0, "Topic should match");
     TESTASSERT(strncmp("payload", payload->message, 8) == 0, "Message should be 'payload'");
 
@@ -268,8 +276,11 @@ TestResult test_decode_puback(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypePubAck, "Should be puback packet");
 
+    TESTASSERT(strcmp("PUBACK", get_packet_name(packet)) == 0, "Packet name");
+
     PubAckPayload *payload = (PubAckPayload *)packet->payload;
     TESTASSERT(payload->packet_id == 10, "Packet id should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
 
     free_MQTTPacket(packet);
     buffer_release(buffer);
@@ -288,8 +299,11 @@ TestResult test_decode_pubrec(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypePubRec, "Should be pubrec packet");
 
+    TESTASSERT(strcmp("PUBREC", get_packet_name(packet)) == 0, "Packet name");
+
     PubRecPayload *payload = (PubRecPayload *)packet->payload;
     TESTASSERT(payload->packet_id == 10, "Packet id should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
 
     free_MQTTPacket(packet);
     buffer_release(buffer);
@@ -308,8 +322,11 @@ TestResult test_decode_pubrel(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypePubRel, "Should be pubrel packet");
 
+    TESTASSERT(strcmp("PUBREL", get_packet_name(packet)) == 0, "Packet name");
+
     PubRelPayload *payload = (PubRelPayload *)packet->payload;
     TESTASSERT(payload->packet_id == 10, "Packet id should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
 
     free_MQTTPacket(packet);
     buffer_release(buffer);
@@ -328,8 +345,11 @@ TestResult test_decode_pubcomp(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypePubComp, "Should be pubcomp packet");
 
+    TESTASSERT(strcmp("PUBCOMP", get_packet_name(packet)) == 0, "Packet name");
+
     PubCompPayload *payload = (PubCompPayload *)packet->payload;
     TESTASSERT(payload->packet_id == 10, "Packet id should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
 
     free_MQTTPacket(packet);
     buffer_release(buffer);
@@ -350,9 +370,12 @@ TestResult test_decode_subscribe(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypeSubscribe, "Should be subscribe packet");
 
+    TESTASSERT(strcmp("SUBSCRIBE", get_packet_name(packet)) == 0, "Packet name");
+
     SubscribePayload *payload = (SubscribePayload *)packet->payload;
     TESTASSERT(payload->qos == MQTT_QOS_1, "QoS should be 1");
     TESTASSERT(payload->packet_id == 10, "Packet ID should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
     TESTASSERT(strncmp("test/topic", payload->topic, 11) == 0, "Topic should match");
 
     free_MQTTPacket(packet);
@@ -373,8 +396,11 @@ TestResult test_decode_suback(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypeSubAck, "Should be suback packet");
 
+    TESTASSERT(strcmp("SUBACK", get_packet_name(packet)) == 0, "Packet name");
+
     SubAckPayload *payload = (SubAckPayload *)packet->payload;
     TESTASSERT(payload->packet_id == 10, "Packet ID should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
     TESTASSERT(payload->status == SubAckStatusQoS2, "Status should be QoS 2 ack");
 
     free_MQTTPacket(packet);
@@ -395,8 +421,11 @@ TestResult test_decode_unsubscribe(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypeUnsubscribe, "Should be unsubscribe packet");
 
+    TESTASSERT(strcmp("UNSUBSCRIBE", get_packet_name(packet)) == 0, "Packet name");
+
     UnsubscribePayload *payload = (UnsubscribePayload *)packet->payload;
     TESTASSERT(payload->packet_id == 10, "Packet ID should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
     TESTASSERT(strncmp("test/topic", payload->topic, 11) == 0, "Topic should match");
 
     free_MQTTPacket(packet);
@@ -416,8 +445,11 @@ TestResult test_decode_unsuback(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypeUnsubAck, "Should be unsuback packet");
 
+    TESTASSERT(strcmp("UNSUBACK", get_packet_name(packet)) == 0, "Packet name");
+
     UnsubAckPayload *payload = (UnsubAckPayload *)packet->payload;
     TESTASSERT(payload->packet_id == 10, "Packet ID should be 10");
+    TESTASSERT(get_packet_id(packet) == 10, "Packet ID");
 
     free_MQTTPacket(packet);
     buffer_release(buffer);
@@ -435,6 +467,8 @@ TestResult test_decode_pingreq(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypePingReq, "Should be pingreq packet");
 
+    TESTASSERT(strcmp("PINGREQ", get_packet_name(packet)) == 0, "Packet name");
+
     free_MQTTPacket(packet);
     buffer_release(buffer);
 
@@ -451,6 +485,8 @@ TestResult test_decode_pingresp(void) {
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypePingResp, "Should be pingresp packet");
 
+    TESTASSERT(strcmp("PINGRESP", get_packet_name(packet)) == 0, "Packet name");
+
     free_MQTTPacket(packet);
     buffer_release(buffer);
 
@@ -466,6 +502,8 @@ TestResult test_decode_disconnect(void) {
 
     TESTASSERT(packet != NULL, "Packet should be valid");
     TESTASSERT(packet->packet_type == PacketTypeDisconnect, "Should be disconnect packet");
+
+    TESTASSERT(strcmp("DISCONNECT", get_packet_name(packet)) == 0, "Packet name");
 
     free_MQTTPacket(packet);
     buffer_release(buffer);
