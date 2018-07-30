@@ -19,7 +19,6 @@ MQTT library for multiple platforms including embedded targets.
 
 - [ ] QoS testing, client -> server QoS partly works, server -> client does not
 - [ ] Running in MQTT Broker mode
-- [ ] Last will is implemented but not exposed in API
 - [ ] Implement Protocol level 3 (low prio)
 - [ ] Implement Draft Protocol level 5 (somewhat low prio as it's a draft spec)
 - [ ] Support ESP8266 (RTOS)
@@ -79,10 +78,15 @@ typedef struct {
     char *hostname;  /**< Hostname to connect to, will do DNS resolution */
     uint16_t port;   /**< Port the broker listens on, set to 0 for 1883 default */
 
-    char *client_id; /**< Client identification */
+    char *client_id;    /**< Client identification max 23 chars */
+    bool clean_session; /**< Set to true to reset the session on reconnect */
 
     char *username;  /**< User name, set to NULL to connect anonymously */
     char *password;  /**< Password, set to NULL to connect without password */
+
+    char *last_will_topic;   /**< last will topic that is automatically published on connection loss */
+    char *last_will_message; /**< last will message */
+    bool last_will_retain;   /**< tell server to retain last will message */
 } MQTTConfig;
 ```
 
@@ -104,7 +108,7 @@ or re-trying by changing settings and calling mqtt_reconnect() and returning fal
 The error handler should be defined like this:
 
 ```c
-bool error_handler(MQTTHandle *handle, MQTTErrorCode code) {
+bool error_handler(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode code) {
 
     return true; // kill the handle, return false to keep it
 }
@@ -138,10 +142,11 @@ a successful reconnect.
 #### Subscribe to a topic
 
 ```c
-MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTPublishEventHandler callback);
+MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
 ```
 - `handle`: MQTT Handle from `mqtt_connect`
 - `topic`: Topic to subscribe
+- `qos_level`: Maximum QoS level to subscribe for
 - `callback`: Callback function to call when receiving something for that topic
 - Returns status code
 
@@ -174,6 +179,7 @@ MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosL
 - `handle`: MQTT Handle from `mqtt_connect`
 - `topic`: Topic to publish to
 - `payload`: Message payload to publish
+- `qos_level`: QoS Level for the publish (0 = Fire and forget, 1 = At least once, 2 = One time for sure)
 - Returns status code
 
 This uses a c-string as the payload, theoretically the protocol would allow for binary payloads, but this is currently

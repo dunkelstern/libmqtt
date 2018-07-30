@@ -45,7 +45,7 @@ typedef enum {
  *
  * Return true if the handle should be freed, false to keep it
  */
-typedef bool (*MQTTErrorHandler)(MQTTHandle *handle, MQTTErrorCode code);
+typedef bool (*MQTTErrorHandler)(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode code);
 
 /** Event handler callback */
 typedef void (*MQTTEventHandler)(MQTTHandle *handle, void *context);

@@ -8,7 +8,7 @@ bool leave = false;
 
 #define LOG(fmt, ...) fprintf(stdout, fmt "\n", ## __VA_ARGS__)
 
-bool err_handler(MQTTHandle *handle, MQTTErrorCode error) {
+bool err_handler(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode error) {
     LOG("Error received: %d", error);
     exit(1);
 

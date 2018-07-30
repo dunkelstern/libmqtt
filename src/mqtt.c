@@ -137,7 +137,7 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
 
     char ip[40];
     if (!hostname_to_ip(handle->config->hostname, ip)) {
-        bool free_handle = handle->error_handler(handle, MQTT_Error_Host_Not_Found);
+        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Host_Not_Found);
         if (free_handle) {
             mqtt_free(handle);
         }
@@ -147,7 +147,7 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
     }
     ret = inet_pton(AF_INET, ip, &(servaddr.sin_addr));
     if (ret == 0) {
-        bool free_handle = handle->error_handler(handle, MQTT_Error_Host_Not_Found);
+        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Host_Not_Found);
         if (free_handle) {
             mqtt_free(handle);
         }
@@ -158,7 +158,7 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
 
     ret = connect(handle->sock, (struct sockaddr *)&servaddr, sizeof(servaddr));
     if (ret != 0) {
-        bool free_handle = handle->error_handler(handle, MQTT_Error_Connection_Refused);
+        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Connection_Refused);
         if (free_handle) {
             mqtt_free(handle);
         }
@@ -174,7 +174,7 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
     bool result = send_connect_packet(handle);
     if (result == false) {
         DEBUG_LOG("Sending connect packet failed, running error handler");
-        bool free_handle = handle->error_handler(handle, MQTT_Error_Broker_Disconnected);
+        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Broker_Disconnected);
         if (free_handle) {
             mqtt_free(handle);
         }
@@ -223,7 +223,7 @@ MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *c
 
 MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback) {
     if (!handle->reader_alive) {
-        handle->error_handler(handle, MQTT_Error_Connection_Reset);
+        handle->error_handler(handle, handle->config, MQTT_Error_Connection_Reset);
         return MQTT_STATUS_ERROR;
     }
     add_subscription(handle, topic, qos_level, callback);
@@ -232,7 +232,7 @@ MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_leve
 
 MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic) {
     if (!handle->reader_alive) {
-        handle->error_handler(handle, MQTT_Error_Connection_Reset);
+        handle->error_handler(handle, handle->config, MQTT_Error_Connection_Reset);
         return MQTT_STATUS_ERROR;
     }
     remove_subscription(handle, topic);
@@ -241,7 +241,7 @@ MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic) {
 
 MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level) {
     if (!handle->reader_alive) {
-        handle->error_handler(handle, MQTT_Error_Connection_Reset);
+        handle->error_handler(handle, handle->config, MQTT_Error_Connection_Reset);
         return MQTT_STATUS_ERROR;
     }
     return (send_publish_packet(handle, topic, payload, qos_level) ? MQTT_STATUS_OK : MQTT_STATUS_ERROR);

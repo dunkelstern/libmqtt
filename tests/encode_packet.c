@@ -286,6 +286,7 @@ TestResult test_encode_publish_dup_qos0(void) {
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
     free(payload);
     TESTASSERT(encoded == NULL, "DUP and QoS level 0 is an incompatible combination");
+    TEST_OK();
 }
 
 TestResult test_encode_publish_with_msg(void) {
