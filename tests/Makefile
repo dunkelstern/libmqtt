@@ -5,16 +5,16 @@ TARGETS=$(SRCS:%.c=%.test)
 
 COVERAGE_FLAGS=-fprofile-arcs -ftest-coverage
 
+DEBUG_FLAGS=-DDEBUG=1
 CC=gcc
-CFLAGS=-g -Os -Wall -I.. -I../src -I../platform -DDEBUG=1 $(COVERAGE_FLAGS)
-# -DTIMETRIAL
+CFLAGS=-g -Os -Wall -I.. -I../src -I../platform $(DEBUG_FLAGS) $(COVERAGE_FLAGS)
 LDFLAGS=
 LIBS=-L.. -lmqtt-debug -lpthread
 
 all: $(TARGETS)
 
-%.test: %.o cputime.o
-	$(CC) $(COVERAGE_FLAGS) $(LDFLAGS) -o $@ cputime.o $< $(LIBS)
+%.test: %.o
+	$(CC) $(COVERAGE_FLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
 	./$@
 	rm $@
 

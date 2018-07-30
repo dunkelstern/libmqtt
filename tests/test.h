@@ -6,7 +6,6 @@
 
 #include <string.h>
 
-#include "cputime.h"
 #include "buffer.h"
 
 typedef enum {
@@ -45,12 +44,7 @@ extern DefinedTest defined_tests[];
 #define TEST_OK() return (TestResult){ TestStatusOk, NULL, NULL, NULL }
 #define TESTRESULT(_status, _message) return (TestResult){ _status, _message, NULL, NULL }
 #define TESTRESULT_BUFFER(_status, _message, _buffer, _template) return (TestResult){ _status, _message, _buffer, _template }
-
-#ifdef TIMETRIAL
-# define TESTASSERT(_assertion, _message) if (!(_assertion)) { return (TestResult){ TestStatusFailure, NULL, NULL, NULL }; }
-#else
-# define TESTASSERT(_assertion, _message) if (!(_assertion)) { return (TestResult){ TestStatusFailure, _message, NULL, NULL }; }
-#endif
+#define TESTASSERT(_assertion, _message) if (!(_assertion)) { return (TestResult){ TestStatusFailure, _message, NULL, NULL }; }
 
 
 static inline TestResult TESTMEMCMP(Buffer *template, Buffer *check) {
@@ -72,8 +66,6 @@ static TestResult not_implemented(void) {
 }
 #endif
 
-void timetrial(DefinedTest *test);
-
 int main(int argc, char **argv) {
     uint16_t successes = 0;
     uint16_t skips = 0;
@@ -84,12 +76,7 @@ int main(int argc, char **argv) {
         switch (result.status) {
             case TestStatusOk:
                 successes++;
-                fprintf(stdout, "info: Test %s suceeded ", test->name);
-                #ifdef TIMETRIAL
-                timetrial(test);
-                #else
-                fprintf(stdout, "\n");
-                #endif
+                fprintf(stdout, "info: Test %s suceeded\n", test->name);
                 break;
             case TestStatusSkipped:
                 skips++;
@@ -132,20 +119,3 @@ int main(int argc, char **argv) {
 
     return failures > 0;
 }
-
-#ifdef TIMETRIAL
-#define ITER 10000000
-void timetrial(DefinedTest *test) {
-    double start, end;
-
-    start = getCPUTime();
-    for(uint64_t i = 0; i < ITER; i++) {
-        volatile TestResult result = test->run();
-        (void)result;
-    }
-    end = getCPUTime();
-
-	double time = (end - start) * 1000.0 /* ms */ * 1000.0 /* us */ * 1000.0 /* ns */ / (double)ITER;
-    fprintf(stdout, "[ %0.3f ns ]\n", time);
-}
-#endif
