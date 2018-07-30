@@ -221,7 +221,7 @@ bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
         payload->message = malloc(len);
         memcpy(payload->message, buffer->data + buffer->position, len - 1);
         payload->message[len] = '\0';
-        buffer->position += len;
+        buffer->position += len - 1;
     }
 
     return true;
