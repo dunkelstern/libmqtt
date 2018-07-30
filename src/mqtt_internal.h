@@ -3,33 +3,10 @@
 
 #include "mqtt.h"
 #include "packet.h"
+#include "subscriptions.h"
+#include "state_queue.h"
 
 typedef struct _PlatformData PlatformData;
-
-typedef struct {
-    char *topic;
-    MQTTEventHandler *handler;
-    bool pending;
-} SubscriptionItem;
-
-typedef struct {
-    SubscriptionItem *items;
-    uint8_t num_items;
-} Subscriptions;
-
-typedef void (*MQTTCallback)(MQTTHandle *handle, MQTTPacket *packet, void *context);
-
-typedef struct {
-    MQTTControlPacketType type;
-    uint16_t packet_id;
-    void *context;
-    MQTTCallback callback;
-} MQTTCallbackQueueItem;
-
-typedef struct {
-    MQTTCallbackQueueItem *pending;
-    uint8_t num_items;
-} MQTTCallbackQueue;
 
 struct _MQTTHandle {
     MQTTConfig *config;
