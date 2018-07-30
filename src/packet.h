@@ -127,4 +127,11 @@ void free_MQTTPacket(MQTTPacket *packet);
 Buffer *mqtt_packet_encode(MQTTPacket *packet);
 MQTTPacket *allocate_MQTTPacket(MQTTControlPacketType type);
 
+/*
+ * Utility
+ */
+
+uint16_t get_packet_id(MQTTPacket *packet);
+char *get_packet_name(MQTTPacket *packet);
+
 #endif /* packet_h__included */

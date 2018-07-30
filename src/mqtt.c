@@ -9,6 +9,7 @@
 
 #include "mqtt.h"
 #include "mqtt_internal.h"
+#include "packet.h"
 #include "platform.h"
 #include "protocol.h"
 #include "debug.h"
@@ -33,7 +34,7 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
         case PacketTypeSubAck:
         case PacketTypeUnsubAck:
             if (!dispatch_packet(handle, packet)) {
-                DEBUG_LOG("Unexpected packet!");
+                DEBUG_LOG("Unexpected packet! (type: %s, packet_id: %d)", get_packet_name(packet), get_packet_id(packet));
                 disconnect(handle);
             }
             break;

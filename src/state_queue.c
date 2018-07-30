@@ -31,31 +31,6 @@ void expect_packet(MQTTHandle *handle, MQTTControlPacketType type, uint16_t pack
     // dump_expected(handle);
 }
 
-static uint16_t get_packet_id(MQTTPacket *packet) {
-    switch(packet->packet_type) {
-        case PacketTypePublish:
-            return ((PublishPayload *)packet->payload)->packet_id;
-        case PacketTypePubAck:
-            return ((PubAckPayload *)packet->payload)->packet_id;
-        case PacketTypePubRec:
-            return ((PubRecPayload *)packet->payload)->packet_id;
-        case PacketTypePubRel:
-            return ((PubRelPayload *)packet->payload)->packet_id;
-        case PacketTypePubComp:
-            return ((PubCompPayload *)packet->payload)->packet_id;
-        case PacketTypeSubscribe:
-            return ((SubscribePayload *)packet->payload)->packet_id;
-        case PacketTypeSubAck:
-            return ((SubAckPayload *)packet->payload)->packet_id;
-        case PacketTypeUnsubscribe:
-            return ((UnsubscribePayload *)packet->payload)->packet_id;
-        case PacketTypeUnsubAck:
-            return ((UnsubAckPayload *)packet->payload)->packet_id;
-        default:
-            return 0; // no packet id in payload
-    }
-}
-
 void remove_from_queue(MQTTHandle *handle, MQTTCallbackQueueItem *remove) {
     MQTTCallbackQueueItem *item = handle->queue.pending;
     MQTTCallbackQueueItem *prev_item = NULL;
