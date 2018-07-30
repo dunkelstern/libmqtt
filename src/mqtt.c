@@ -111,8 +111,8 @@ static void _reader(MQTTHandle *handle) {
                     // Not complete recv buffer was consumed, so we have more than one packet in there
                     size_t remaining = max_receive_buffer_size - buffer->position;
                     memmove(read_buffer, read_buffer + buffer->position, remaining);
-                    offset -= remaining;
-                    num_bytes -= remaining;
+                    offset -= buffer->position;
+                    num_bytes -= buffer->position;
                     free(buffer);
                 } else {
                     // buffer consumed completely, read another chunk
