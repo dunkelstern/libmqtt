@@ -37,54 +37,57 @@ typedef enum {
 } MQTTErrorCode;
 
 /** Error handler callback
- * 
+ *
  * Return true if the handle should be freed, false to keep it
  */
 typedef bool (*MQTTErrorHandler)(MQTTHandle *handle, MQTTErrorCode code);
 
 /** Event handler callback */
-typedef void (*MQTTEventHandler)(MQTTHandle *handle, char *topic, char *payload);
+typedef void (*MQTTEventHandler)(MQTTHandle *handle, void *context);
+
+/** publish event callback */
+typedef void (*MQTTPublishEventHandler)(MQTTHandle *handle, char *topic, char *payload);
 
 /**
  * Connect to MQTT broker
- * 
+ *
  * @param config: MQTT configuration
  * @param callback: Callback function to call on errors
  * @returns handle to mqtt connection or NULL on error
- * 
+ *
  * If the error handler is called with Host not found or Connection refused,
  * the handler is in charge of freeing the handle by returning true
  * or re-trying by changing settings and calling mqtt_reconnect() and returning false
  */
-MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTErrorHandler callback);
+MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *callback_context, MQTTErrorHandler error_callback);
 
 /**
  * Re-Connect to MQTT broker
- * 
+ *
  * Usually called in the MQTTErrorHandler callback, if called on a working
  * connection the connection will be disconnected before reconnecting.
- * 
+ *
  * If there were registered subscriptions they will be re-instated after
  * a successful reconnect.
- * 
+ *
  * @param handle: MQTT Handle from `mqtt_connect`
  * @returns: Status code
  */
-MQTTStatus mqtt_reconnect(MQTTHandle *handle);
+MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
 
 /**
  * Subscribe to a topic
- * 
+ *
  * @param handle: MQTT Handle from `mqtt_connect`
  * @param topic: Topic to subscribe
  * @param callback: Callback function to call when receiving something for that topic
  * @returns: Status code
  */
-MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTEventHandler callback);
+MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTPublishEventHandler callback);
 
 /**
  * Un-Subscribe from a topic
- * 
+ *
  * @param handle: MQTT Handle from `mqtt_connect`
  * @param topic: Topic to unsubscribe
  * @returns: Status code
@@ -93,7 +96,7 @@ MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
 
 /**
  * Publish something to the broker
- * 
+ *
  * @param handle: MQTT Handle from `mqtt_connect`
  * @param topic: Topic to publish to
  * @param payload: Message payload to publish
@@ -103,13 +106,13 @@ MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosL
 
 /**
  * Disconnect from MQTT broker
- * 
+ *
  * @param handle: MQTT Handle from `mqtt_connect`
  * @returns: Status code
- * 
+ *
  * @attention: do not use the handle after calling this function,
  *             all resources will be freed, this handle is now invalid!
  */
-MQTTStatus mqtt_disconnect(MQTTHandle *handle);
+MQTTStatus mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
 
 #endif /* mqtt_h__included */
