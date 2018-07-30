@@ -2,6 +2,7 @@
 #include "state_queue.h"
 #include "debug.h"
 
+#if 0
 static inline void dump_expected(MQTTHandle *handle) {
     MQTTCallbackQueueItem *item = handle->queue.pending;
 
@@ -13,6 +14,7 @@ static inline void dump_expected(MQTTHandle *handle) {
         item = item->next;
     }
 }
+#endif
 
 void expect_packet(MQTTHandle *handle, MQTTControlPacketType type, uint16_t packet_id, MQTTEventHandler callback, void *context) {
     MQTTCallbackQueueItem *item = calloc(1, sizeof(MQTTCallbackQueueItem));
@@ -45,7 +47,6 @@ void remove_from_queue(MQTTHandle *handle, MQTTCallbackQueueItem *remove) {
                 // attach next item to prev item removing this one
                 prev_item->next = item->next;
             }
-            free(item);
 
             break;
         }
@@ -60,11 +61,12 @@ bool dispatch_packet(MQTTHandle *handle, MQTTPacket *packet) {
 
     while (item != NULL) {
         if ((item->type == packet->packet_type) && (item->packet_id == packet_id)) {
+            remove_from_queue(handle, item);
             if (item->callback) {
                 item->callback(handle, item->context);
             }
+            free(item);
 
-            remove_from_queue(handle, item);
             return true;
         }
         item = item->next;

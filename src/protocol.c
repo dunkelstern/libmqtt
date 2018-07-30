@@ -7,6 +7,15 @@
 
 #include "debug.h"
 
+typedef struct {
+    PublishPayload *payload;
+    MQTTPublishEventHandler callback;
+} PublishCallback;
+
+/*
+ * Utility
+ */
+
 bool send_buffer(MQTTHandle *handle, Buffer *buffer) {
     while (!buffer_eof(buffer)) {
         ssize_t bytes = write(handle->sock, buffer->data + buffer->position, buffer_free_space(buffer));
@@ -19,6 +28,39 @@ bool send_buffer(MQTTHandle *handle, Buffer *buffer) {
     buffer_release(buffer);
     return true;
 }
+
+/*
+ * QoS event handlers
+ */
+
+void handle_puback_pubcomp(MQTTHandle *handle, void *context) {
+    PublishCallback *ctx = (PublishCallback *)context;
+
+    if (ctx->callback) {
+        ctx->callback(handle, ctx->payload->topic, ctx->payload->message);
+    }
+
+    free(ctx->payload);
+    free(ctx);
+}
+
+void handle_pubrec(MQTTHandle *handle, void *context) {
+    PublishCallback *ctx = (PublishCallback *)context;
+
+    PubRelPayload newPayload = {
+        .packet_id = ctx->payload->packet_id
+    };
+
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRel, &newPayload });
+    expect_packet(handle, PacketTypePubComp, ctx->payload->packet_id, handle_puback_pubcomp, context);
+
+    encoded->position = 0;
+    send_buffer(handle, encoded);
+}
+
+/*
+ * packet constructors
+ */
 
 #if MQTT_CLIENT
 bool send_connect_packet(MQTTHandle *handle) {
@@ -92,23 +134,7 @@ bool send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
 }
 #endif /* MQTT_CLIENT */
 
-void handle_pubrec(MQTTHandle *handle, void *context) {
-    PublishPayload *payload = (PublishPayload *)context;
-
-    PubRelPayload newPayload = {
-        .packet_id = payload->packet_id
-    };
-
-    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRel, &newPayload });
-
-    expect_packet(handle, PacketTypePubComp, payload->packet_id, NULL, NULL);
-    free(payload);
-
-    encoded->position = 0;
-    send_buffer(handle, encoded);
-}
-
-bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQosLevel qos) {
+bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQosLevel qos, MQTTPublishEventHandler callback) {
     PublishPayload *payload = calloc(1, sizeof(PublishPayload));
 
     payload->qos = qos;
@@ -118,24 +144,39 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
     payload->message = message;
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
+    encoded->position = 0;
+    bool result = send_buffer(handle, encoded);
+    if (!result) {
+        free(payload);
+        return false;
+    }
 
     // Handle QoS and add waiting packets to queue
     switch(payload->qos) {
         case MQTT_QOS_0:
             // fire and forget
+            if (callback) {
+                callback(handle, payload->topic, payload->message);
+            }
             free(payload);
             break;
-        case MQTT_QOS_1:
-            expect_packet(handle, PacketTypePubAck, payload->packet_id, NULL, NULL);
-            free(payload);
+        case MQTT_QOS_1: {
+            PublishCallback *ctx = malloc(sizeof(PublishCallback));
+            ctx->payload = payload;
+            ctx->callback = callback;
+            expect_packet(handle, PacketTypePubAck, payload->packet_id, handle_puback_pubcomp, ctx);
             break;
-        case MQTT_QOS_2:
-            expect_packet(handle, PacketTypePubRec, payload->packet_id, handle_pubrec, payload);
+        }
+        case MQTT_QOS_2: {
+            PublishCallback *ctx = malloc(sizeof(PublishCallback));
+            ctx->payload = payload;
+            ctx->callback = callback;
+            expect_packet(handle, PacketTypePubRec, payload->packet_id, handle_pubrec, ctx);
             break;
+        }
     }
 
-    encoded->position = 0;
-    return send_buffer(handle, encoded);
+    return true;
 }
 
 #if MQTT_CLIENT

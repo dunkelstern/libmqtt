@@ -4,7 +4,7 @@
 
 #include "mqtt.h"
 
-bool leave = false;
+int leave = 0;
 
 #define LOG(fmt, ...) fprintf(stdout, fmt "\n", ## __VA_ARGS__)
 
@@ -15,26 +15,38 @@ bool err_handler(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode error) {
     return true;
 }
 
+void publish_handler(MQTTHandle *handle, char *topic, char *message) {
+    LOG("Published %s -> %s", topic, message);
+
+    leave++;
+}
+
 void mqtt_connected(MQTTHandle *handle, void *context) {
     LOG("Connected!");
+    MQTTStatus result;
 
     LOG("Trying publish to testsuite/mqtt/test...");
-    MQTTStatus result = mqtt_publish(handle, "testsuite/mqtt/test", "payload", MQTT_QOS_0);
+    result = mqtt_publish(handle, "testsuite/mqtt/test", "payload1", MQTT_QOS_0, publish_handler);
     if (result != MQTT_STATUS_OK) {
         LOG("Could not publish");
         exit(1);
     }
 
-    sleep(1);
-
-    LOG("Disconnecting...");
-    result = mqtt_disconnect(handle, NULL, NULL);
+    LOG("Trying publish to testsuite/mqtt/test_qos1...");
+    result = mqtt_publish(handle, "testsuite/mqtt/test_qos1", "payload2", MQTT_QOS_1, publish_handler);
     if (result != MQTT_STATUS_OK) {
-        LOG("Could not disconnect");
+        LOG("Could not publish");
         exit(1);
     }
 
-    exit(0);
+    LOG("Trying publish to testsuite/mqtt/test_qos2...");
+    result = mqtt_publish(handle, "testsuite/mqtt/test_qos2", "payload3", MQTT_QOS_2, publish_handler);
+    if (result != MQTT_STATUS_OK) {
+        LOG("Could not publish");
+        exit(1);
+    }
+
+    leave = true;
 }
 
 int main(int argc, char **argv) {
@@ -62,8 +74,20 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    while (!leave) {
+    int cancel = 0;
+    while (leave < 3) {
         LOG("Waiting...");
         sleep(1);
+        cancel++;
+        if (cancel == 10) {
+            break;
+        }
+    }
+
+    LOG("Disconnecting...");
+    MQTTStatus result = mqtt_disconnect(mqtt, NULL, NULL);
+    if (result != MQTT_STATUS_OK) {
+        LOG("Could not disconnect");
+        exit(1);
     }
 }

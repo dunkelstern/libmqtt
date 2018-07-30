@@ -121,9 +121,11 @@ MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
  * @param handle: MQTT Handle from `mqtt_connect`
  * @param topic: Topic to publish to
  * @param payload: Message payload to publish
+ * @param qos_level: QoS level to use
+ * @param callback: finish callback
  * @returns: Status code
  */
-MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level);
+MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
 
 /**
  * Disconnect from MQTT broker

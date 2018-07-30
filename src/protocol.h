@@ -10,6 +10,6 @@ bool send_unsubscribe_packet(MQTTHandle *handle, char *topic);
 bool send_disconnect_packet(MQTTHandle *handle);
 #endif /* MQTT_CLIENT */
 
-bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQosLevel qos);
+bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQosLevel qos, MQTTPublishEventHandler callback);
 
 #endif

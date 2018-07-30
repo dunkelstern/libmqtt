@@ -239,12 +239,12 @@ MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic) {
     return (send_unsubscribe_packet(handle, topic) ? MQTT_STATUS_OK : MQTT_STATUS_ERROR);
 }
 
-MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level) {
+MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventHandler callback) {
     if (!handle->reader_alive) {
         handle->error_handler(handle, handle->config, MQTT_Error_Connection_Reset);
         return MQTT_STATUS_ERROR;
     }
-    return (send_publish_packet(handle, topic, payload, qos_level) ? MQTT_STATUS_OK : MQTT_STATUS_ERROR);
+    return (send_publish_packet(handle, topic, payload, qos_level, callback) ? MQTT_STATUS_OK : MQTT_STATUS_ERROR);
 }
 
 MQTTStatus mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context) {

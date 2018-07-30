@@ -173,13 +173,14 @@ MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
 #### Publish something to the broker
 
 ```c
-MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level);
+MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventCallback callback);
 ```
 
 - `handle`: MQTT Handle from `mqtt_connect`
 - `topic`: Topic to publish to
 - `payload`: Message payload to publish
 - `qos_level`: QoS Level for the publish (0 = Fire and forget, 1 = At least once, 2 = One time for sure)
+- `callback`: Callback function that is called when publish cleared the QoS handlers
 - Returns status code
 
 This uses a c-string as the payload, theoretically the protocol would allow for binary payloads, but this is currently
