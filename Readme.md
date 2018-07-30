@@ -17,11 +17,11 @@ MQTT library for multiple platforms including embedded targets.
 
 ## TODO
 
-[ ] QoS testing, client -> server QoS partly works, server -> client does not
-[ ] Running in MQTT Broker mode
-[ ] Last will is implemented but not exposed in API
-[ ] Implement Protocol level 3 (low prio)
-[ ] Implement Draft Protocol level 5 (somewhat low prio as it's a draft spec)
+- [] QoS testing, client -> server QoS partly works, server -> client does not
+- [] Running in MQTT Broker mode
+- [] Last will is implemented but not exposed in API
+- [] Implement Protocol level 3 (low prio)
+- [] Implement Draft Protocol level 5 (somewhat low prio as it's a draft spec)
 
 ## How to use
 
