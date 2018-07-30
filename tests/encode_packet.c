@@ -302,7 +302,7 @@ TestResult test_encode_publish_with_msg(void) {
 TestResult test_encode_puback(void) {
     char data[] = {
         0x40, 0x02, // header
-        0x00, 0x0a  // packet id 
+        0x00, 0x0a  // packet id
     };
     PubAckPayload *payload = calloc(1, sizeof(PubAckPayload));
 
@@ -320,7 +320,7 @@ TestResult test_encode_puback(void) {
 TestResult test_encode_pubrec(void) {
     char data[] = {
         0x50, 0x02, // header
-        0x00, 0x0a  // packet id 
+        0x00, 0x0a  // packet id
     };
     PubRecPayload *payload = calloc(1, sizeof(PubRecPayload));
 
@@ -337,8 +337,8 @@ TestResult test_encode_pubrec(void) {
 
 TestResult test_encode_pubrel(void) {
     char data[] = {
-        0x60, 0x02, // header
-        0x00, 0x0a  // packet id 
+        0x62, 0x02, // header
+        0x00, 0x0a  // packet id
     };
     PubRelPayload *payload = calloc(1, sizeof(PubRelPayload));
 
@@ -356,7 +356,7 @@ TestResult test_encode_pubrel(void) {
 TestResult test_encode_pubcomp(void) {
     char data[] = {
         0x70, 0x02, // header
-        0x00, 0x0a  // packet id 
+        0x00, 0x0a  // packet id
     };
     PubCompPayload *payload = calloc(1, sizeof(PubCompPayload));
 
@@ -373,7 +373,7 @@ TestResult test_encode_pubcomp(void) {
 
 TestResult test_encode_subscribe(void) {
     char data[] = {
-        0x80, 0x0f, // header
+        0x82, 0x0f, // header
         0x00, 0x0a,  // packet id
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
         0x01 // qos
@@ -415,7 +415,7 @@ TestResult test_encode_suback(void) {
 
 TestResult test_encode_unsubscribe(void) {
     char data[] = {
-        0xa0, 0x0e, // header
+        0xa2, 0x0e, // header
         0x00, 0x0a, // packet id
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
     };

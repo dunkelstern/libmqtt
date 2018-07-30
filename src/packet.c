@@ -376,6 +376,17 @@ Buffer *make_buffer_for_header(size_t sz, MQTTControlPacketType type) {
 
     Buffer *buffer = buffer_allocate(sz);
     buffer->data[0] = type << 4;
+
+    // MQTT Spec means we should set a bit in the flags field for some packet types
+    switch (type) {
+        case PacketTypePubRel:
+        case PacketTypeSubscribe:
+        case PacketTypeUnsubscribe:
+            buffer->data[0] |= 0x02;
+            break;
+        default:
+            break;
+    }
     buffer->position += 1;
     variable_length_int_encode(sz - 2, buffer);
     

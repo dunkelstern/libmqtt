@@ -260,7 +260,7 @@ TestResult test_decode_publish_with_msg(void) {
 TestResult test_decode_puback(void) {
     char data[] = {
         0x40, 0x02, // header
-        0x00, 0x0a  // packet id 
+        0x00, 0x0a  // packet id
     };
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     MQTTPacket *packet = mqtt_packet_decode(buffer);
@@ -280,7 +280,7 @@ TestResult test_decode_puback(void) {
 TestResult test_decode_pubrec(void) {
     char data[] = {
         0x50, 0x02, // header
-        0x00, 0x0a  // packet id 
+        0x00, 0x0a  // packet id
     };
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     MQTTPacket *packet = mqtt_packet_decode(buffer);
@@ -299,8 +299,8 @@ TestResult test_decode_pubrec(void) {
 
 TestResult test_decode_pubrel(void) {
     char data[] = {
-        0x60, 0x02, // header
-        0x00, 0x0a  // packet id 
+        0x62, 0x02, // header
+        0x00, 0x0a  // packet id
     };
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     MQTTPacket *packet = mqtt_packet_decode(buffer);
@@ -320,7 +320,7 @@ TestResult test_decode_pubrel(void) {
 TestResult test_decode_pubcomp(void) {
     char data[] = {
         0x70, 0x02, // header
-        0x00, 0x0a  // packet id 
+        0x00, 0x0a  // packet id
     };
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     MQTTPacket *packet = mqtt_packet_decode(buffer);
@@ -339,7 +339,7 @@ TestResult test_decode_pubcomp(void) {
 
 TestResult test_decode_subscribe(void) {
     char data[] = {
-        0x80, 0x0f, // header
+        0x82, 0x0f, // header
         0x00, 0x0a,  // packet id
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
         0x01 // qos
@@ -385,7 +385,7 @@ TestResult test_decode_suback(void) {
 
 TestResult test_decode_unsubscribe(void) {
     char data[] = {
-        0xa0, 0x0e, // header
+        0xa2, 0x0e, // header
         0x00, 0x0a, // packet id
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
     };
