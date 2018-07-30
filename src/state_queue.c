@@ -56,7 +56,6 @@ void remove_from_queue(MQTTHandle *handle, MQTTCallbackQueueItem *remove) {
 
 bool dispatch_packet(MQTTHandle *handle, MQTTPacket *packet) {
     MQTTCallbackQueueItem *item = handle->queue.pending;
-    MQTTCallbackQueueItem *prev_item = NULL;
     uint16_t packet_id = get_packet_id(packet);
 
     while (item != NULL) {
@@ -68,7 +67,6 @@ bool dispatch_packet(MQTTHandle *handle, MQTTPacket *packet) {
             remove_from_queue(handle, item);
             return true;
         }
-        prev_item = item;
         item = item->next;
     }
 

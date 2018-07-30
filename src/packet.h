@@ -68,19 +68,12 @@ typedef struct {
 
 typedef struct {
     uint16_t packet_id;
-} PubAckPayload;
+} PacketIDPayload;
 
-typedef struct {
-    uint16_t packet_id;
-} PubRecPayload;
-
-typedef struct {
-    uint16_t packet_id;
-} PubRelPayload;
-
-typedef struct {
-    uint16_t packet_id;
-} PubCompPayload;
+#define PubAckPayload PacketIDPayload
+#define PubRecPayload PacketIDPayload
+#define PubRelPayload PacketIDPayload
+#define PubCompPayload PacketIDPayload
 
 typedef struct {
     uint16_t packet_id;
@@ -105,9 +98,7 @@ typedef struct {
     char *topic;
 } UnsubscribePayload;
 
-typedef struct {
-    uint16_t packet_id;
-} UnsubAckPayload;
+#define UnsubAckPayload PacketIDPayload
 
 typedef struct {
     MQTTControlPacketType packet_type;
