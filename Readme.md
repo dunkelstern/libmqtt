@@ -29,7 +29,7 @@ And no, I will not do an Arduino port.
 
 ## How to use
 
-### Building under Linux
+### Building on Linux
 
 1. Checkout the repo
 2. Run make:
@@ -38,7 +38,7 @@ make -f Makefile.linux
 ```
 3. Grab `libmqtt.a` or `libmqtt-debug.a` and `src/mqtt.h` and add that into your project.
 
-### Testing under Linux
+### Testing on Linux
 
 Requirements:
 
