@@ -42,7 +42,7 @@ static inline void hexdump(char *data, size_t len, int indent) {
                 fprintf(stdout, "%c", (uint8_t)c);
             } else {
                 fprintf(stdout, " ");
-            }            
+            }
         }
 
         fprintf(stdout, "\n");
@@ -53,7 +53,7 @@ static inline void hexdump(char *data, size_t len, int indent) {
 #else /* DEBUG */
 
 #define DEBUG_LOG(fmt, ...) /* */
-#define hexdump(_data, _len) /* */
+#define hexdump(_data, _len, _indent) /* */
 
 #endif /* DEBUG */
 
