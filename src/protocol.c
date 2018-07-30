@@ -73,8 +73,8 @@ bool send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
 bool send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
     UnsubscribePayload *payload = calloc(1, sizeof(UnsubscribePayload));
 
-    payload->packet_id = 10;
-    payload->topic = "test/topic";
+    payload->packet_id = (++handle->packet_id_counter > 0) ? handle->packet_id_counter : ++handle->packet_id_counter;
+    payload->topic = topic;
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeUnsubscribe, payload });
 
