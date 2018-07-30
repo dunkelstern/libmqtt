@@ -26,12 +26,12 @@ bool send_connect_packet(MQTTHandle *handle) {
     payload->client_id = handle->config->client_id;
     payload->protocol_level = 4;
     payload->keepalive_interval = 60;
+    payload->clean_session = handle->config->clean_session;
 
-    // TODO: support last will
-    // payload->will_topic = "test/lastwill";
-    // payload->will_message = "disconnected";
-    // payload->will_qos = MQTT_QOS_1;
-    // payload->retain_will = true;
+    payload->will_topic = handle->config->last_will_topic;
+    payload->will_message = handle->config->last_will_message;
+    payload->will_qos = MQTT_QOS_0;
+    payload->retain_will = handle->config->last_will_retain;
 
     payload->username = handle->config->username;
     payload->password = handle->config->password;

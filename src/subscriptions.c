@@ -1,10 +1,11 @@
 #include "mqtt_internal.h"
 #include "subscriptions.h"
 
-void add_subscription(MQTTHandle *handle, char *topic, MQTTPublishEventHandler callback) {
+void add_subscription(MQTTHandle *handle, char *topic, MQTTQosLevel qos, MQTTPublishEventHandler callback) {
     SubscriptionItem *item = calloc(1, sizeof(SubscriptionItem));
 
     item->topic = topic;
+    item->qos = qos;
     item->handler = callback;
     item->pending = true;
 

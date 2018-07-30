@@ -11,9 +11,14 @@ typedef struct {
     uint16_t port;   /**< Port the broker listens on, set to 0 for 1883 default */
 
     char *client_id; /**< Client identification */
+    bool clean_session; /**< Set to true to reset the session on reconnect */
 
     char *username;  /**< User name, set to NULL to connect anonymously */
     char *password;  /**< Password, set to NULL to connect without password */
+
+    char *last_will_topic;   /**< last will topic that is automatically published on connection loss */
+    char *last_will_message; /**< last will message */
+    bool last_will_retain;   /**< tell server to retain last will message */
 } MQTTConfig;
 
 typedef enum {
@@ -84,10 +89,11 @@ MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *c
  *
  * @param handle: MQTT Handle from `mqtt_connect`
  * @param topic: Topic to subscribe
+ * @param qos_level: Maximum qos level to subscribe to
  * @param callback: Callback function to call when receiving something for that topic
  * @returns: Status code
  */
-MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTPublishEventHandler callback);
+MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
 
 /**
  * Un-Subscribe from a topic

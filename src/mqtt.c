@@ -214,13 +214,13 @@ MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *c
     return MQTT_STATUS_OK;
 }
 
-MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTPublishEventHandler callback) {
+MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback) {
     if (!handle->reader_alive) {
         handle->error_handler(handle, MQTT_Error_Connection_Reset);
         return MQTT_STATUS_ERROR;
     }
-    add_subscription(handle, topic, callback);
-    return (send_subscribe_packet(handle, topic) ? MQTT_STATUS_OK : MQTT_STATUS_ERROR);
+    add_subscription(handle, topic, qos_level, callback);
+    return (send_subscribe_packet(handle, topic, qos_level) ? MQTT_STATUS_OK : MQTT_STATUS_ERROR);
 }
 
 MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic) {

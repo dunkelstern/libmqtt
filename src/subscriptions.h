@@ -7,6 +7,7 @@ typedef struct _SubscriptionItem {
     struct _SubscriptionItem *next;
 
     char *topic;
+    MQTTQosLevel qos;
     MQTTPublishEventHandler handler;
     bool pending;
 } SubscriptionItem;
@@ -15,7 +16,7 @@ typedef struct {
     SubscriptionItem *items;
 } Subscriptions;
 
-void add_subscription(MQTTHandle *handle, char *topic, MQTTPublishEventHandler callback);
+void add_subscription(MQTTHandle *handle, char *topic, MQTTQosLevel qos, MQTTPublishEventHandler callback);
 void remove_subscription(MQTTHandle *handle, char *topic);
 void subscription_set_pending(MQTTHandle *handle, char *topic, bool pending);
 
