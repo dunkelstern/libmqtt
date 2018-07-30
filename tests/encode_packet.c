@@ -274,6 +274,25 @@ TestResult test_encode_publish_no_msg(void) {
     );
 }
 
+TestResult test_encode_publish_dup_qos0(void) {
+    char data[] = {
+        0x33, 0x0e, // header, qos1, retain
+        0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
+        0x00, 0x0a // packet id
+    };
+    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+
+    payload->qos = MQTT_QOS_0;
+    payload->duplicate = true;
+    payload->retain = true;
+    payload->topic = "test/topic";
+    payload->packet_id = 10;
+
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
+    free(payload);
+    TESTASSERT(encoded == NULL, "DUP and QoS level 0 is an incompatible combination");
+}
+
 TestResult test_encode_publish_with_msg(void) {
     char data[] = {
         0x3b, 0x15, // header, qos1, retain
@@ -511,6 +530,7 @@ TESTS(
     TEST("Encode Connect with auth", test_encode_connect_auth),
     TEST("Encode ConnAck", test_encode_connack),
     TEST("Encode Publish with no message", test_encode_publish_no_msg),
+    TEST("Encode Publish with invalid flags", test_encode_publish_dup_qos0),
     TEST("Encode Publish with message", test_encode_publish_with_msg),
     TEST("Encode PubAck", test_encode_puback),
     TEST("Encode PubRec", test_encode_pubrec),

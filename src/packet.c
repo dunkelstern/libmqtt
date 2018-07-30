@@ -475,6 +475,11 @@ Buffer *encode_publish(PublishPayload *payload) {
     }
     buffer->data[buffer->position - 2] |= (payload->qos << 1);
     if (payload->duplicate) {
+        if (payload->qos == MQTT_QOS_0) {
+            DEBUG_LOG("You can not set a DUP flag for QoS Level 0.");
+            buffer_release(buffer);
+            return NULL;
+        }
         buffer->data[buffer->position - 2] |= 8;
     }
 
