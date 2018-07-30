@@ -52,7 +52,9 @@ typedef void (*MQTTPublishEventHandler)(MQTTHandle *handle, char *topic, char *p
  * Connect to MQTT broker
  *
  * @param config: MQTT configuration
- * @param callback: Callback function to call on errors
+ * @param callback: Success callback
+ * @param callback_context: Context pointer for the callback
+ * @param error_callback: Callback function to call on errors
  * @returns handle to mqtt connection or NULL on error
  *
  * If the error handler is called with Host not found or Connection refused,
@@ -71,6 +73,8 @@ MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *ca
  * a successful reconnect.
  *
  * @param handle: MQTT Handle from `mqtt_connect`
+ * @param callback: Success callback
+ * @param callback_context: Context pointer for the callback
  * @returns: Status code
  */
 MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
