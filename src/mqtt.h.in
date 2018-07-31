@@ -13,10 +13,13 @@
 
 #define LIBMQTT_VERSION_MAJOR @LIBMQTT_VERSION_MAJOR@
 #define LIBMQTT_VERSION_MINOR @LIBMQTT_VERSION_MINOR@
-#define LIBMQTT_BUILD_DATE @LIBMQTT_BUILD_DATE@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#ifndef _unused
+#define _unused __attribute__((unused))
+#endif
 
 typedef struct _MQTTHandle MQTTHandle;
 

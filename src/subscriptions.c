@@ -2,7 +2,7 @@
 #include "subscriptions.h"
 
 void add_subscription(MQTTHandle *handle, char *topic, MQTTQosLevel qos, MQTTPublishEventHandler callback) {
-    SubscriptionItem *item = calloc(1, sizeof(SubscriptionItem));
+    SubscriptionItem *item = (SubscriptionItem *)calloc(1, sizeof(SubscriptionItem));
 
     item->topic = topic;
     item->qos = qos;

@@ -8,7 +8,7 @@ bool leave = false;
 
 #define LOG(fmt, ...) fprintf(stdout, fmt "\n", ## __VA_ARGS__)
 
-bool err_handler(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode error) {
+bool err_handler(_unused MQTTHandle *handle, _unused MQTTConfig *config, MQTTErrorCode error) {
     LOG("Error received: %d", error);
 
     return 1;
@@ -33,7 +33,7 @@ void callback(MQTTHandle *handle, char *topic, char *payload) {
     leave = true;
 }
 
-void mqtt_connected(MQTTHandle *handle, void *context) {
+void mqtt_connected(MQTTHandle *handle, _unused void *context) {
     LOG("Connected!");
 
     LOG("Trying subscribe on testsuite/mqtt/test...");
@@ -50,7 +50,7 @@ void mqtt_connected(MQTTHandle *handle, void *context) {
     }
 }
 
-int main(int argc, char **argv) {
+int main(_unused int argc, _unused char **argv) {
     MQTTConfig config = { 0 };
 
     config.client_id = "libmqtt_testsuite";

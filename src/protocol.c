@@ -58,7 +58,7 @@ void handle_pubrec(MQTTHandle *handle, void *context) {
 
 #if MQTT_CLIENT
 bool send_connect_packet(MQTTHandle *handle) {
-    ConnectPayload *payload = calloc(1, sizeof(ConnectPayload));
+    ConnectPayload *payload = (ConnectPayload *)calloc(1, sizeof(ConnectPayload));
 
     payload->client_id = handle->config->client_id;
     payload->protocol_level = 4;
@@ -94,7 +94,7 @@ void remove_pending(MQTTHandle *handle, void *context) {
 
 #if MQTT_CLIENT
 bool send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
-    SubscribePayload *payload = calloc(1, sizeof(SubscribePayload));
+    SubscribePayload *payload = (SubscribePayload *)calloc(1, sizeof(SubscribePayload));
 
     payload->packet_id = (++handle->packet_id_counter > 0) ? handle->packet_id_counter : ++handle->packet_id_counter;
     payload->topic = strdup(topic);
@@ -112,7 +112,7 @@ bool send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
 
 #if MQTT_CLIENT
 bool send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
-    UnsubscribePayload *payload = calloc(1, sizeof(UnsubscribePayload));
+    UnsubscribePayload *payload = (UnsubscribePayload *)calloc(1, sizeof(UnsubscribePayload));
 
     payload->packet_id = (++handle->packet_id_counter > 0) ? handle->packet_id_counter : ++handle->packet_id_counter;
     payload->topic = topic;
@@ -129,7 +129,7 @@ bool send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
 #endif /* MQTT_CLIENT */
 
 bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQosLevel qos, MQTTPublishEventHandler callback) {
-    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+    PublishPayload *payload = (PublishPayload *)calloc(1, sizeof(PublishPayload));
 
     payload->qos = qos;
     payload->retain = true;
@@ -155,14 +155,14 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
             free(payload);
             break;
         case MQTT_QOS_1: {
-            PublishCallback *ctx = malloc(sizeof(PublishCallback));
+            PublishCallback *ctx = (PublishCallback *)malloc(sizeof(PublishCallback));
             ctx->payload = payload;
             ctx->callback = callback;
             expect_packet(handle, PacketTypePubAck, payload->packet_id, handle_puback_pubcomp, ctx);
             break;
         }
         case MQTT_QOS_2: {
-            PublishCallback *ctx = malloc(sizeof(PublishCallback));
+            PublishCallback *ctx = (PublishCallback *)malloc(sizeof(PublishCallback));
             ctx->payload = payload;
             ctx->callback = callback;
             expect_packet(handle, PacketTypePubRec, payload->packet_id, handle_pubrec, ctx);

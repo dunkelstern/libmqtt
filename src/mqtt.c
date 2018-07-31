@@ -35,7 +35,7 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
             break;
 
         case PacketTypePublish:
-            dispatch_subscription(handle, packet->payload);
+            dispatch_subscription(handle, (PublishPayload *)packet->payload);
             // TODO: Handle QoS
             break;
 
@@ -55,7 +55,7 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
     }
 }
 
-static void _reader(MQTTHandle *handle) {
+static void *_reader(MQTTHandle *handle) {
     Buffer *buffer = buffer_allocate(max_receive_buffer_size);
 
     handle->reader_alive = true;
@@ -64,7 +64,7 @@ static void _reader(MQTTHandle *handle) {
         PlatformStatusCode ret = platform_read(handle, buffer);
         if (ret == PlatformStatusError) {
             handle->reader_alive = false;
-            return;
+            return NULL;
         }
 
         while (1) {
@@ -85,7 +85,7 @@ static void _reader(MQTTHandle *handle) {
                     platform_disconnect(handle);
                     handle->reader_alive = false;
                     buffer_release(buffer);
-                    return;
+                    return NULL;
                 }
             } else {
                 hexdump(buffer->data, num_bytes, 2);
@@ -147,7 +147,7 @@ MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *co
         return NULL;
     }
 
-    MQTTHandle *handle = calloc(sizeof(struct _MQTTHandle), 1);
+    MQTTHandle *handle = (MQTTHandle *)calloc(sizeof(struct _MQTTHandle), 1);
     PlatformStatusCode ret = platform_init(handle);
     if (ret == PlatformStatusError) {
         free(handle);

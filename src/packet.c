@@ -7,7 +7,7 @@
  */
 
 MQTTPacket *allocate_MQTTPacket(MQTTControlPacketType type) {
-    MQTTPacket *packet = calloc(1, sizeof(MQTTPacket));
+    MQTTPacket *packet = (MQTTPacket *)calloc(1, sizeof(MQTTPacket));
     packet->packet_type = type;
 
     switch (type) {
@@ -75,12 +75,12 @@ char *utf8_string_decode(Buffer *buffer) {
         return NULL; // buffer too small
     }
     uint16_t sz = (buffer->data[buffer->position] << 8) + buffer->data[buffer->position + 1];
-    if (buffer_free_space(buffer) < sz + 2) {
+    if (buffer_free_space(buffer) < (size_t)(sz + 2)) {
         return NULL; // incomplete buffer
     }
     buffer->position += 2;
 
-    result = malloc(sz + 1);
+    result = (char *)malloc(sz + 1);
     buffer_copy_out(buffer, result, sz);
     result[sz] = '\0';
     return result;
@@ -152,11 +152,11 @@ size_t utf8_string_encode(char *string, Buffer *buffer) {
 #if MQTT_SERVER
 bool decode_connect(Buffer *buffer, ConnectPayload *payload) {
     // Validate this is actually a connect packet
-    char template[] = { 0x00, 0x04, 'M', 'Q', 'T', 'T' };
-    if (memcmp(buffer->data + buffer->position, template, sizeof(template)) != 0) {
+    char check[] = { 0x00, 0x04, 'M', 'Q', 'T', 'T' };
+    if (memcmp(buffer->data + buffer->position, check, sizeof(check)) != 0) {
         return false;
     }
-    buffer->position += sizeof(template);
+    buffer->position += sizeof(check);
 
     payload->protocol_level = buffer->data[buffer->position++];
     uint8_t flags = buffer->data[buffer->position++];
@@ -172,7 +172,7 @@ bool decode_connect(Buffer *buffer, ConnectPayload *payload) {
         payload->will_topic = utf8_string_decode(buffer);
         payload->will_message = utf8_string_decode(buffer);
     }
-    payload->will_qos = (flags & 0x18) >> 3;
+    payload->will_qos = (MQTTQosLevel)((flags & 0x18) >> 3);
     payload->retain_will = (flags & 0x20) > 0;
 
     // username
@@ -191,7 +191,7 @@ bool decode_connect(Buffer *buffer, ConnectPayload *payload) {
 
 bool decode_connack(Buffer *buffer, ConnAckPayload *payload) {
     payload->session_present = buffer->data[buffer->position++] & 0x01;
-    payload->status = buffer->data[buffer->position++];
+    payload->status = (ConnAckStatus)buffer->data[buffer->position++];
 
     return true;
 }
@@ -200,7 +200,7 @@ bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
     uint8_t flags = buffer->data[buffer->position - 2] & 0x0f;
     uint16_t start_pos = buffer->position;
 
-    payload->qos = (flags & 0x06) >> 1;
+    payload->qos = (MQTTQosLevel)((flags & 0x06) >> 1);
     payload->retain = ((flags & 0x01) > 0);
     payload->duplicate = ((flags & 0x08) > 0);
 
@@ -214,7 +214,7 @@ bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
     
     size_t len = sz - (buffer->position - start_pos) + 1;
     if (len > 1) {
-        payload->message = calloc(1, len);
+        payload->message = (char *)calloc(1, len);
         memcpy(payload->message, buffer->data + buffer->position, len - 1);
         buffer->position += len - 1;
     }
@@ -238,7 +238,7 @@ bool decode_subscribe(Buffer *buffer, SubscribePayload *payload) {
     buffer->position += 2;
 
     payload->topic = utf8_string_decode(buffer);
-    payload->qos = buffer->data[buffer->position++] & 0x03;
+    payload->qos = (MQTTQosLevel)(buffer->data[buffer->position++] & 0x03);
 
     return true;
 }
@@ -250,7 +250,7 @@ bool decode_suback(Buffer *buffer, SubAckPayload *payload) {
         + buffer->data[buffer->position + 1];
     buffer->position += 2;
 
-    payload->status = buffer->data[buffer->position++];
+    payload->status = (SubAckStatus)(buffer->data[buffer->position++]);
 
     return true;
 }
@@ -271,7 +271,7 @@ bool decode_unsubscribe(Buffer *buffer, UnsubscribePayload *payload) {
 
 MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
     // validate that the buffer is big enough
-    MQTTControlPacketType type = (buffer->data[buffer->position] & 0xf0) >> 4;
+    MQTTControlPacketType type = (MQTTControlPacketType)((buffer->data[buffer->position] & 0xf0) >> 4);
     buffer->position++;
     size_t packet_size = variable_length_int_decode(buffer);
 
@@ -283,20 +283,20 @@ MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
     bool valid = false;
     switch (type) {
         case PacketTypeConnAck:
-            valid = decode_connack(buffer, result->payload);
+            valid = decode_connack(buffer, (ConnAckPayload *)result->payload);
             break;
         case PacketTypePublish:
-            valid = decode_publish(buffer, result->payload, packet_size);
+            valid = decode_publish(buffer, (PublishPayload *)result->payload, packet_size);
             break;
         case PacketTypeSubAck:
-            valid = decode_suback(buffer, result->payload);
+            valid = decode_suback(buffer, (SubAckPayload *)result->payload);
             break;
         case PacketTypePubAck:
         case PacketTypePubRec:
         case PacketTypePubRel:
         case PacketTypePubComp:
         case PacketTypeUnsubAck:
-            valid = decode_packet_id(buffer, result->payload);
+            valid = decode_packet_id(buffer, (PacketIDPayload *)result->payload);
             break;
         case PacketTypePingResp:
         case PacketTypeDisconnect:
@@ -308,13 +308,13 @@ MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
             valid = true; // there is no payload
             break;
         case PacketTypeConnect:
-            valid = decode_connect(buffer, result->payload);
+            valid = decode_connect(buffer, (ConnectPayload *)result->payload);
             break;
         case PacketTypeSubscribe:
-            valid = decode_subscribe(buffer, result->payload);
+            valid = decode_subscribe(buffer, (SubscribePayload *)result->payload);
             break;
         case PacketTypeUnsubscribe:
-            valid = decode_unsubscribe(buffer, result->payload);
+            valid = decode_unsubscribe(buffer, (UnsubscribePayload *)result->payload);
             break;
 #endif /* MQTT_SERVER */
 

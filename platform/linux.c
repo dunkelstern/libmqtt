@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+#include "debug.h"
 #include "mqtt_internal.h"
 #include "platform.h"
 
@@ -24,7 +25,7 @@ struct _PlatformData {
 };
 
 PlatformStatusCode platform_init(MQTTHandle *handle) {
-    handle->platform = calloc(1, sizeof(struct _PlatformData));
+    handle->platform = (PlatformData *)calloc(1, sizeof(struct _PlatformData));
     handle->platform->sock = -1;
     if (handle->platform) {
         return PlatformStatusOk;
@@ -64,6 +65,7 @@ PlatformStatusCode platform_run_task(MQTTHandle *handle, int *task_handle, Platf
         return PlatformStatusError;
     }
 
+    *task_handle = free_task;
     return PlatformStatusOk;
 }
 

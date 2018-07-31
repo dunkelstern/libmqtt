@@ -8,20 +8,20 @@ int leave = 0;
 
 #define LOG(fmt, ...) fprintf(stdout, fmt "\n", ## __VA_ARGS__)
 
-bool err_handler(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode error) {
+bool err_handler(_unused MQTTHandle *handle, _unused MQTTConfig *config, MQTTErrorCode error) {
     LOG("Error received: %d", error);
     exit(1);
 
     return true;
 }
 
-void publish_handler(MQTTHandle *handle, char *topic, char *message) {
+void publish_handler(_unused MQTTHandle *handle, char *topic, char *message) {
     LOG("Published %s -> %s", topic, message);
 
     leave++;
 }
 
-void mqtt_connected(MQTTHandle *handle, void *context) {
+void mqtt_connected(MQTTHandle *handle, _unused void *context) {
     LOG("Connected!");
     MQTTStatus result;
 
@@ -49,7 +49,7 @@ void mqtt_connected(MQTTHandle *handle, void *context) {
     leave = true;
 }
 
-int main(int argc, char **argv) {
+int main(_unused int argc, _unused char **argv) {
     MQTTConfig config = { 0 };
 
     config.client_id = "libmqtt_testsuite_this_is_too_long";

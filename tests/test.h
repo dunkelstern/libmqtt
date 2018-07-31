@@ -19,7 +19,7 @@ typedef struct {
     TestStatus status;
     char *message;
     Buffer *buffer;
-    Buffer *template;
+    Buffer *valid;
 } TestResult;
 
 typedef TestResult (*TestPointer)(void);
@@ -43,18 +43,18 @@ extern DefinedTest defined_tests[];
 
 #define TEST_OK() return (TestResult){ TestStatusOk, NULL, NULL, NULL }
 #define TESTRESULT(_status, _message) return (TestResult){ _status, _message, NULL, NULL }
-#define TESTRESULT_BUFFER(_status, _message, _buffer, _template) return (TestResult){ _status, _message, _buffer, _template }
+#define TESTRESULT_BUFFER(_status, _message, _buffer, _valid) return (TestResult){ _status, _message, _buffer, _valid }
 #define TESTASSERT(_assertion, _message) if (!(_assertion)) { return (TestResult){ TestStatusFailure, _message, NULL, NULL }; }
 
 
-static inline TestResult TESTMEMCMP(Buffer *template, Buffer *check) {
-    if (template->len != check->len) {
-        TESTRESULT_BUFFER(TestStatusFailureHexdump, "Buffer size differs from template", check, template);
+static inline TestResult TESTMEMCMP(Buffer *valid, Buffer *check) {
+    if (valid->len != check->len) {
+        TESTRESULT_BUFFER(TestStatusFailureHexdump, "Buffer size differs from valid", check, valid);
     }
-    if (memcmp(template->data, check->data, template->len) == 0) {
-        TESTRESULT(TestStatusOk, "Buffer matches template");
+    if (memcmp(valid->data, check->data, valid->len) == 0) {
+        TESTRESULT(TestStatusOk, "Buffer matches valid");
     } else {
-        TESTRESULT_BUFFER(TestStatusFailureHexdump, "Buffer and template differ", check, template);
+        TESTRESULT_BUFFER(TestStatusFailureHexdump, "Buffer and valid differ", check, valid);
     }
 }
 
@@ -66,7 +66,11 @@ static TestResult not_implemented(void) {
 }
 #endif
 
-int main(int argc, char **argv) {
+#ifndef _unused
+#define _unused __attribute__((unused))
+#endif
+
+int main(_unused int argc, _unused char **argv) {
     uint16_t successes = 0;
     uint16_t skips = 0;
     uint16_t failures = 0;
@@ -101,9 +105,9 @@ int main(int argc, char **argv) {
                 if (result.message) {
                     fprintf(stderr, "  -> %s\n", result.message);
                 }
-                if (result.template) {
-                    fprintf(stderr, "  -> Template (%zu bytes)\n", result.template->len);
-                    buffer_hexdump(result.template, 5);
+                if (result.valid) {
+                    fprintf(stderr, "  -> Template (%zu bytes)\n", result.valid->len);
+                    buffer_hexdump(result.valid, 5);
                 }
                 if (result.buffer) {
                     fprintf(stderr, "  -> Buffer (%zu bytes)\n", result.buffer->len);

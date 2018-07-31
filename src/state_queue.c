@@ -17,7 +17,7 @@ static inline void dump_expected(MQTTHandle *handle) {
 #endif
 
 void expect_packet(MQTTHandle *handle, MQTTControlPacketType type, uint16_t packet_id, MQTTEventHandler callback, void *context) {
-    MQTTCallbackQueueItem *item = calloc(1, sizeof(MQTTCallbackQueueItem));
+    MQTTCallbackQueueItem *item = (MQTTCallbackQueueItem *)calloc(1, sizeof(MQTTCallbackQueueItem));
 
     item->type = type;
     item->packet_id = packet_id;

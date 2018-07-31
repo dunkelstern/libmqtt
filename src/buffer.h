@@ -198,7 +198,7 @@ static inline size_t buffer_append_buffer(Buffer *dest, Buffer *src) {
     return buffer_append_data(dest, src->data, src->len);
 }
 
-#if DEBUG
+#if DEBUG_HEXDUMP
 #include "debug.h"
 
 static inline void buffer_hexdump(Buffer *buffer, int indent) {

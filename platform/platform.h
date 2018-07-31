@@ -3,7 +3,7 @@
 
 #include "mqtt_internal.h"
 
-typedef void (*PlatformTask)(MQTTHandle *handle);
+typedef void *(*PlatformTask)(MQTTHandle *handle);
 
 /** maximum receiver buffer size, defined by platform */
 extern const size_t max_receive_buffer_size;
