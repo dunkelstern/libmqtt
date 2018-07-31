@@ -1,4 +1,4 @@
-SRCS=src/mqtt.c src/packet.c src/protocol.c src/state_queue.c src/subscriptions.c src/debug.c platform/linux.c
+SRCS=src/mqtt.c src/packet.c src/protocol.c src/state_queue.c src/subscriptions.c platform/linux.c
 OBJS=$(SRCS:%.c=%.o)
 DEBUG_OBJS=$(SRCS:%.c=%.do)
 COVERAGE_FILES=$(SRCS:%.c=%.gcno) $(SRCS:%.c=%.gcda)
