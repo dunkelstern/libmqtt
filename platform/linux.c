@@ -94,7 +94,8 @@ PlatformStatusCode platform_resolve_host(char *hostname , char *ip) {
         DEBUG_LOG("Resolving host failed: %s", gai_strerror(ret));
         return PlatformStatusError;
     }
- 
+
+    // FIXME: we do not try to connect here, perhaps return a list or just the first
     // loop through all the results and connect to the first we can
     for(struct addrinfo *p = servinfo; p != NULL; p = p->ai_next) {
         h = (struct sockaddr_in *)p->ai_addr;
@@ -165,8 +166,7 @@ PlatformStatusCode platform_read(MQTTHandle *handle, Buffer *buffer) {
                 continue;
             }
 
-            /* Set reader task to dead */
-            handle->reader_alive = false;
+            /* Some error occured */
             return PlatformStatusError;
         }
 
