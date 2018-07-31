@@ -8,10 +8,6 @@
                 "${workspaceRoot}/tests",
                 "/usr/include"
             ],
-            "defines": [
-                "MAX_BUFFER_SIZE=256",
-                "DEBUG=1"
-            ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
@@ -26,7 +22,9 @@
             "databaseFilename": "",
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c99",
-            "cppStandard": "c++17"
+            "cppStandard": "c++17",
+            "configurationProvider": "vector-of-bool.cmake-tools",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
         }
     ],
     "version": 4

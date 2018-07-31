@@ -1,19 +1,15 @@
 {
     "files.associations": {
-        "stdlib.h": "c",
         "mqtt_internal.h": "c",
         "platform.h": "c",
-        "tidyplatform.h": "c",
-        "type_traits": "cpp",
-        "istream": "c",
-        "optional": "c",
-        "ostream": "c",
-        "ratio": "c",
-        "system_error": "c",
-        "array": "c",
-        "string_view": "c",
         "packet.h": "c",
-        "debug.h": "c"
+        "buffer.h": "c",
+        "debug.h": "c",
+        "protocol.h": "c",
+        "state_queue.h": "c",
+        "subscriptions.h": "c",
+        "mqtt.h": "c",
+        "tidyplatform.h": "c"
     },
     "files.exclude": {
         "**/.git": true,
@@ -26,6 +22,8 @@
         "**/*.gcno": true,
         "**/*.gcda": true,
         "**/*.gcov": true,
-        "**/*.a": true
-    }
+        "**/*.a": true,
+        "**/build": true
+    },
+    "coverage-gutters.lcovname": "coverage.info"
 }

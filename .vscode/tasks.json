@@ -4,37 +4,68 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build linux",
+            "label": "Build",
             "type": "shell",
             "command": "make",
             "args": [
-                "-f",
-                "Makefile.linux",
+                "-j",
+                "8",
                 "clean",
                 "all"
             ],
             "options": {
-                "cwd": "${workspaceRoot}"
+                "cwd": "${workspaceRoot}/build"
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
+            "problemMatcher": {
+                // The problem is owned by the cpp language service.
+                "owner": "cpp",
+                // The file name for reported problems is relative to the opened folder.
+                "fileLocation": "absolute",
+                // The actual pattern to match problems in the output.
+                "pattern": {
+                    // The regular expression. Example to match: helloWorld.c:5:3: warning: implicit declaration of function ‘printf’ [-Wimplicit-function-declaration]
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    // The first match group matches the file name which is relative.
+                    "file": 1,
+                    // The second match group matches the line on which the problem occurred.
+                    "line": 2,
+                    // The third match group matches the column at which the problem occurred.
+                    "column": 3,
+                    // The fourth match group matches the problem's severity. Can be ignored. Then all problems are captured as errors.
+                    "severity": 4,
+                    // The fifth match group matches the message.
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "CMake",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                ".."
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "group": "build",
             "problemMatcher": [
                 "$gcc"
             ]
         },
         {
-            "label": "Clean linux",
+            "label": "Clean",
             "type": "shell",
             "command": "make",
             "args": [
-                "-f",
-                "Makefile.linux",
                 "clean"
             ],
             "options": {
-                "cwd": "${workspaceRoot}"
+                "cwd": "${workspaceRoot}/build"
             },
             "problemMatcher": [
                 "$gcc"
