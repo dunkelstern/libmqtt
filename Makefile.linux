@@ -6,6 +6,9 @@ COVERAGE_FILES=$(SRCS:%.c=%.gcno) $(SRCS:%.c=%.gcda)
 TARGET=libmqtt.a
 DEBUG_TARGET=libmqtt-debug.a
 
+MAJOR_VERSION=0
+MINOR_VERSION=1
+
 PLATFORM_FLAGS=
 
 AR=ar
@@ -30,16 +33,31 @@ coverage:
 	mkdir -p coverage
 	genhtml -o coverage lcov.info
 
+dist: $(TARGET)
+	mkdir -p dist/include
+	mkdir -p dist/lib
+	cp libmqtt.a dist/lib
+	cp src/mqtt.h dist/include
+	(cd dist && tar czvf ../libmqtt-$(MAJOR_VERSION).$(MINOR_VERSION).tar.gz .)
+
+src/mqtt.h: src/mqtt.h.in
+	sed \
+		-e 's/@LIBMQTT_VERSION_MAJOR@/'$(MAJOR_VERSION)'/' \
+		-e 's/@LIBMQTT_VERSION_MINOR@/'$(MINOR_VERSION)'/' \
+		-e 's/@LIBMQTT_BUILD_DATE@/"'`date +%Y-%m-%d_%H-%M-%S`'"/' \
+	       src/mqtt.h.in >src/mqtt.h
+
+
 $(TARGET): $(OBJS)
 	$(AR) -cr $(TARGET) $(OBJS)
 
 $(DEBUG_TARGET): $(DEBUG_OBJS)
 	$(AR) -cr $(DEBUG_TARGET) $(DEBUG_OBJS)
 
-%.do: %.c
+%.do: %.c src/mqtt.h
 	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o $@ -c $<
 
-%.o: %.c
+%.o: %.c src/mqtt.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 mqtt.o: mqtt.h
@@ -52,5 +70,7 @@ clean:
 	rm -f *.gcov
 	rm -rf docs/
 	rm -rf coverage/
+	rm -rf dist/
+	rm -f libmqtt-$(MAJOR_VERSION).$(MINOR_VERSION).tar.gz
 
-.PHONY: coverage test
+.PHONY: coverage test src/mqtt.h

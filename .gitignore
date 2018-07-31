@@ -6,3 +6,5 @@
 *.gcov
 coverage/
 *.test
+cmake-build-debug/
+.idea/
