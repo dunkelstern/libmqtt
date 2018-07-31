@@ -71,6 +71,9 @@ int main(int argc, char **argv) {
     uint16_t skips = 0;
     uint16_t failures = 0;
 
+    setvbuf(stdout, NULL, _IOLBF, 128);
+    setvbuf(stderr, NULL, _IOLBF, 128);
+
     for(DefinedTest *test = defined_tests; test->run != NULL; test++) {
         TestResult result = test->run();
         switch (result.status) {
