@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
+#include <platform.h>
 
 #include "mqtt_internal.h"
 #include "packet.h"
@@ -17,16 +18,9 @@ typedef struct {
  */
 
 bool send_buffer(MQTTHandle *handle, Buffer *buffer) {
-    while (!buffer_eof(buffer)) {
-        ssize_t bytes = write(handle->sock, buffer->data + buffer->position, buffer_free_space(buffer));
-        if (bytes <= 0) {
-            buffer_release(buffer);
-            return false;
-        }
-        buffer->position += bytes;
-    }
+    PlatformStatusCode ret = platform_write(handle, buffer);
     buffer_release(buffer);
-    return true;
+    return (ret == PlatformStatusOk);
 }
 
 /*

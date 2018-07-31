@@ -14,13 +14,15 @@ struct _MQTTHandle {
     MQTTErrorHandler error_handler;
     Subscriptions subscriptions;
 
-    int sock;
     bool reader_alive;
+    int read_task_handle;
 
     uint16_t packet_id_counter;
 
     MQTTCallbackQueue queue;
     PlatformData *platform;
 };
+
+void mqtt_free(MQTTHandle *handle);
 
 #endif /* mqtt_internal_h__included */

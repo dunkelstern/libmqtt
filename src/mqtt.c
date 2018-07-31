@@ -14,14 +14,9 @@
 #include "protocol.h"
 #include "debug.h"
 
-static inline void mqtt_free(MQTTHandle *handle) {
-    release_platform(handle);
+void mqtt_free(MQTTHandle *handle) {
+    platform_release(handle);
     free(handle);
-}
-
-static inline void disconnect(MQTTHandle *handle) {
-    close(handle->sock);
-    // FIXME: Do we have to do anything else?
 }
 
 static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
@@ -35,7 +30,7 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
         case PacketTypeUnsubAck:
             if (!dispatch_packet(handle, packet)) {
                 DEBUG_LOG("Unexpected packet! (type: %s, packet_id: %d)", get_packet_name(packet), get_packet_id(packet));
-                disconnect(handle);
+                (void)platform_disconnect(handle);
             }
             break;
 
@@ -55,70 +50,61 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
         case PacketTypePingReq:
         case PacketTypeDisconnect:
             DEBUG_LOG("Server packet on client connection? What's up with the broker?");
-            disconnect(handle);
+            (void)platform_disconnect(handle);
             break;
     }
 }
 
 static void _reader(MQTTHandle *handle) {
-    ssize_t num_bytes;
-    char *read_buffer = malloc(max_receive_buffer_size);
-    uint8_t offset = 0;
+    Buffer *buffer = buffer_allocate(max_receive_buffer_size);
 
     handle->reader_alive = true;
 
     while (1) {
-        num_bytes = read(handle->sock, &read_buffer[offset], max_receive_buffer_size - offset);
-        if (num_bytes == 0) {
-            /* Socket closed, coordinated shutdown */
-            DEBUG_LOG("Socket closed");
-            handle->reader_alive = false;
-            return;
-        } else if (num_bytes < 0) {
-            if ((errno == EINTR) || (errno == EAGAIN)) {
-                continue;
-            }
-
-            /* Set reader task to dead */
+        PlatformStatusCode ret = platform_read(handle, buffer);
+        if (ret == PlatformStatusError) {
             handle->reader_alive = false;
             return;
         }
 
         while (1) {
-            Buffer *buffer = buffer_from_data_no_copy(read_buffer, num_bytes);
+            buffer->len = buffer->position;
+            buffer->position = 0;
+
             MQTTPacket *packet = mqtt_packet_decode(buffer);
             if (packet == NULL) {
                 // invalid packet
-                if (num_bytes < max_receive_buffer_size) {
-                    // maybe not long enough, try to fetch the rest
-                    offset += num_bytes;
-                    free(buffer);
+                if (buffer_free_space(buffer) > 0) {
+                    // half packet, fetch more
+                    buffer->position = buffer->len;
+                    buffer->len = max_receive_buffer_size;
                     break;
                 } else {
                     // no space in buffer, bail and reconnect
                     DEBUG_LOG("Buffer overflow!");
-                    disconnect(handle);
+                    platform_disconnect(handle);
                     handle->reader_alive = false;
-                    free(buffer);
+                    buffer_release(buffer);
                     return;
                 }
             } else {
-                // hexdump(buffer->data, num_bytes, 2);
-
+                hexdump(buffer->data, num_bytes, 2);
                 parse_packet(handle, packet);
                 free_MQTTPacket(packet);
 
                 if (!buffer_eof(buffer)) {
+                    buffer->position = buffer->len;
+                    buffer->len = max_receive_buffer_size;
+
                     // Not complete recv buffer was consumed, so we have more than one packet in there
                     size_t remaining = max_receive_buffer_size - buffer->position;
-                    memmove(read_buffer, read_buffer + buffer->position, remaining);
-                    offset -= buffer->position;
-                    num_bytes -= buffer->position;
-                    free(buffer);
+                    memmove(buffer->data, buffer->data + buffer->position, remaining);
+                    buffer->position = 0;
+                    break;
                 } else {
                     // buffer consumed completely, read another chunk
-                    offset = 0;
-                    free(buffer);
+                    buffer->position = 0;
+                    buffer->len = max_receive_buffer_size;
                     break;
                 }
             }
@@ -127,47 +113,18 @@ static void _reader(MQTTHandle *handle) {
 }
 
 static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *context) {
-    int ret;
-    struct sockaddr_in servaddr;
-    memset(&servaddr, 0, sizeof(servaddr));
+    PlatformStatusCode ret = platform_connect(handle);
 
-    handle->sock = socket(AF_INET, SOCK_STREAM, 0);
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(handle->config->port);
-
-    char ip[40];
-    if (!hostname_to_ip(handle->config->hostname, ip)) {
-        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Host_Not_Found);
-        if (free_handle) {
-            mqtt_free(handle);
-        }
-        DEBUG_LOG("Resolving hostname failed: %s", strerror(errno));
-        close(handle->sock);
-        return;
-    }
-    ret = inet_pton(AF_INET, ip, &(servaddr.sin_addr));
-    if (ret == 0) {
-        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Host_Not_Found);
-        if (free_handle) {
-            mqtt_free(handle);
-        }
-        DEBUG_LOG("Converting to servaddr failed: %s", strerror(errno));
-        close(handle->sock);
+    if (ret == PlatformStatusError) {
+        DEBUG_LOG("Could not connect");
         return;
     }
 
-    ret = connect(handle->sock, (struct sockaddr *)&servaddr, sizeof(servaddr));
-    if (ret != 0) {
-        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Connection_Refused);
-        if (free_handle) {
-            mqtt_free(handle);
-        }
-        DEBUG_LOG("Connection failed: %s", strerror(errno));
-        close(handle->sock);
+    ret = platform_run_task(handle, &handle->read_task_handle, _reader);
+    if (ret == PlatformStatusError) {
+        DEBUG_LOG("Could not start read task");
         return;
     }
-
-    run_read_task(handle, _reader);
 
     expect_packet(handle, PacketTypeConnAck, 0, callback, context);
 
@@ -175,10 +132,11 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
     if (result == false) {
         DEBUG_LOG("Sending connect packet failed, running error handler");
         bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Broker_Disconnected);
+        platform_disconnect(handle);
         if (free_handle) {
+            platform_cleanup_task(handle, handle->read_task_handle);
             mqtt_free(handle);
         }
-        close(handle->sock);
     }
 }
 
@@ -190,7 +148,11 @@ MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *co
     }
 
     MQTTHandle *handle = calloc(sizeof(struct _MQTTHandle), 1);
-    initialize_platform(handle);
+    PlatformStatusCode ret = platform_init(handle);
+    if (ret == PlatformStatusError) {
+        free(handle);
+        return NULL;
+    }
 
     if (config->port == 0) {
         config->port = 1883;
@@ -208,8 +170,8 @@ MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *co
 MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *context) {
     if (handle->reader_alive) {
         DEBUG_LOG("Closing old connection");
-        close(handle->sock);
-        join_read_task(handle);
+        platform_disconnect(handle);
+        platform_cleanup_task(handle, handle->read_task_handle);
     }
 
     // TODO: re-submit unacknowledged packages with QoS > 0
@@ -249,10 +211,8 @@ MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosL
 
 MQTTStatus mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context) {
     send_disconnect_packet(handle);
-    if (close(handle->sock)) {
-        return MQTT_STATUS_ERROR;
-    }
-    join_read_task(handle);
+    platform_disconnect(handle);
+    platform_cleanup_task(handle, handle->read_task_handle);
     mqtt_free(handle);
 
     if (callback) {
