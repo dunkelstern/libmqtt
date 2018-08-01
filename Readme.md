@@ -30,12 +30,29 @@ And no, I will not do an Arduino port.
 
 ### Building on Linux
 
+Requirements:
+
+- CMake
+- GCC
+
+
 1. Checkout the repo
-2. Run make:
+2. Run cmake:
 ```bash
-make -f Makefile.linux
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=/ ..
 ```
-3. Grab `libmqtt.a` or `libmqtt-debug.a` and `src/mqtt.h` and add that into your project.
+3. Build the library
+```bash
+cd build
+make all
+```
+4. Install/Make a Distribution (Only works in `RELEASE` mode)
+```bash
+make DESTDIR=/path/to/put/it install
+```
+The dynamic and static libs will be placed in the `lib/` sub-dir of that folder and the include in `include/mqtt/mqtt.h`
 
 ### Testing on Linux
 
@@ -47,13 +64,24 @@ Requirements:
 #### Running the tests:
 
 ```bash
-make -f Makefile.linux test
+cd build
+make check
 ```
 
 #### Building a coverage report
 
+**Attention:** Only works in `DEBUG` mode, switch like this:
+
 ```bash
-make -f Makefile.linux coverage
+cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+```
+
+Building the report:
+
+```bash
+cd build
+make coverage
 ```
 
 Be aware to create the coverage report the tests must run, so you'll need the MQTT broker.

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(LIBMQTT LANGUAGES C)
+project(LIBMQTT)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
 
