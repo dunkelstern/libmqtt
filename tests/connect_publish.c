@@ -8,6 +8,10 @@ int leave = 0;
 
 #define LOG(fmt, ...) fprintf(stdout, fmt "\n", ## __VA_ARGS__)
 
+#ifndef _unused
+#define _unused __attribute__((unused))
+#endif
+
 bool err_handler(_unused MQTTHandle *handle, _unused MQTTConfig *config, MQTTErrorCode error) {
     LOG("Error received: %d", error);
     exit(1);
