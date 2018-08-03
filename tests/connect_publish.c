@@ -84,6 +84,9 @@ int main(_unused int argc, _unused char **argv) {
         }
     }
 
+    LOG("Waiting for ping to happen...");
+    sleep(5);
+
     LOG("Disconnecting...");
     MQTTStatus result = mqtt_disconnect(mqtt, NULL, NULL);
     if (result != MQTT_STATUS_OK) {

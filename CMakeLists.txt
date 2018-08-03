@@ -55,7 +55,7 @@ set(mqtt-source
 
 # full build library for testing
 add_library(mqtt-full STATIC ${mqtt-source})
-    target_compile_definitions(mqtt-full PRIVATE MQTT_SERVER=1 MQTT_CLIENT=1)
+    target_compile_definitions(mqtt-full PRIVATE MQTT_SERVER=1 MQTT_CLIENT=1 KEEPALIVE_INTERVAL=4)
     set_target_properties(mqtt-full PROPERTIES PUBLIC_HEADER "src/mqtt.h")
     target_include_directories(mqtt-full
         PUBLIC 

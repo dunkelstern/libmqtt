@@ -19,9 +19,27 @@ void mqtt_free(MQTTHandle *handle) {
     free(handle);
 }
 
+static void _keepalive_callback(MQTTHandle *handle, int timer_handle) {
+    bool result = send_ping_packet(handle);
+    if (!result) {
+        DEBUG_LOG("Sending PINGREQ packet failed!");
+    }
+}
+
 static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
     switch (packet->packet_type) {
         case PacketTypeConnAck:
+            if (!dispatch_packet(handle, packet)) {
+                DEBUG_LOG("Unexpected packet! (type: CONNACK)");
+                (void)platform_disconnect(handle);
+            } else {
+                if (platform_create_timer(handle, KEEPALIVE_INTERVAL, &handle->keepalive_timer, _keepalive_callback) != PlatformStatusOk) {
+                    DEBUG_LOG("Could not create keepalive timer!");
+                    (void)platform_disconnect(handle);
+                }
+            }
+            break;
+
         case PacketTypePubAck:
         case PacketTypePubRec:
         case PacketTypePubRel:

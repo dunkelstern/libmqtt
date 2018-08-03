@@ -21,8 +21,14 @@ struct _MQTTHandle {
 
     MQTTCallbackQueue queue;
     PlatformData *platform;
+
+    int keepalive_timer;
 };
 
 void mqtt_free(MQTTHandle *handle);
+
+#ifndef KEEPALIVE_INTERVAL
+#define KEEPALIVE_INTERVAL 60
+#endif
 
 #endif /* mqtt_internal_h__included */

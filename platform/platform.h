@@ -4,6 +4,7 @@
 #include "mqtt_internal.h"
 
 typedef void *(*PlatformTask)(MQTTHandle *handle);
+typedef void (*PlatformTimerCallback)(MQTTHandle *handle, int timer_handle);
 
 /** maximum receiver buffer size, defined by platform */
 extern const size_t max_receive_buffer_size;
@@ -93,5 +94,33 @@ PlatformStatusCode platform_write(MQTTHandle *handle, Buffer *buffer);
  */
 PlatformStatusCode platform_disconnect(MQTTHandle *handle);
 
+
+/**
+ * Set a recurring timer
+ *
+ * @param handle: State handle
+ * @param interval: Number of seconds to call the callback in
+ * @param timer_handle: Timer handle out
+ * @param callback: Callback to call
+ * @return Platform status code
+ */
+PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *timer_handle, PlatformTimerCallback callback);
+
+/**
+ * Destroy a recurring timer
+ * @param handle
+ * @param timer_handle
+ * @return Platform status code
+ */
+PlatformStatusCode platform_destroy_timer(MQTTHandle *handle, int timer_handle);
+
+
+/**
+ * Sleep for some milliseconds, may yield the task, so the sleep time could be longer
+ *
+ * @param milliseconds: minimum number of milliseconds to sleep
+ * @return Platform status code
+ */
+PlatformStatusCode platform_sleep(int milliseconds);
 
 #endif /* platform_h__included */

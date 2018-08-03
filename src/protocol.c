@@ -62,7 +62,7 @@ bool send_connect_packet(MQTTHandle *handle) {
 
     payload->client_id = handle->config->client_id;
     payload->protocol_level = 4;
-    payload->keepalive_interval = 60;
+    payload->keepalive_interval = KEEPALIVE_INTERVAL;
     payload->clean_session = handle->config->clean_session;
 
     payload->will_topic = handle->config->last_will_topic;
@@ -172,6 +172,14 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
 
     return true;
 }
+
+#if MQTT_CLIENT
+bool send_ping_packet(MQTTHandle *handle) {
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePingReq, NULL });
+    encoded->position = 0;
+    return send_buffer(handle, encoded);
+}
+#endif /* MQTT_CLIENT */
 
 #if MQTT_CLIENT
 bool send_disconnect_packet(MQTTHandle *handle) {

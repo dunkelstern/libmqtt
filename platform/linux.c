@@ -18,15 +18,52 @@
 const size_t max_receive_buffer_size = 4 * 4096; // 16 KB
 
 #define MAX_TASKS 16
+#define MAX_TIMERS 5
+
+typedef struct {
+    PlatformTimerCallback callback;
+    int status;
+    int interval;
+
+} PlatformTimer;
 
 struct _PlatformData {
     pthread_t tasks[MAX_TASKS];
+    PlatformTimer timers[MAX_TIMERS];
+    int timer_task;
     int sock;
 };
+
+void *timer_task(MQTTHandle *handle) {
+    while (1) {
+        platform_sleep(1000);
+
+        bool active = false;
+        for (uint8_t i = 0; i < MAX_TIMERS; i++) {
+            PlatformTimer *timer = &handle->platform->timers[i];
+
+            if (timer->callback != NULL) {
+                timer->status--;
+
+                if (timer->status == 0) {
+                    timer->callback(handle, i);
+                    timer->status = timer->interval;
+                }
+
+                active = true;
+            }
+        }
+
+        if (!active) {
+            return NULL;
+        }
+    }
+}
 
 PlatformStatusCode platform_init(MQTTHandle *handle) {
     handle->platform = (PlatformData *)calloc(1, sizeof(struct _PlatformData));
     handle->platform->sock = -1;
+    handle->platform->timer_task = -1;
     if (handle->platform) {
         return PlatformStatusOk;
     }
@@ -37,6 +74,18 @@ PlatformStatusCode platform_init(MQTTHandle *handle) {
 PlatformStatusCode platform_release(MQTTHandle *handle) {
     PlatformData *p = handle->platform;
 
+    // shut down all timers
+    if (p->timer_task >= 0) {
+        for (uint8_t free_timer = 0; free_timer < MAX_TIMERS; free_timer++) {
+            PlatformStatusCode ret = platform_destroy_timer(handle, free_timer);
+            if (ret != PlatformStatusOk) {
+                DEBUG_LOG("Could not shut down all timers");
+                return PlatformStatusError;
+            }
+        }
+    }
+
+    // check if there are tasks running
     for (uint8_t free_task = 0; free_task < MAX_TASKS; free_task++) {
         if (p->tasks[free_task] != 0) {
             DEBUG_LOG("Cannot free platform handle, there are tasks running!");
@@ -198,5 +247,76 @@ PlatformStatusCode platform_disconnect(MQTTHandle *handle) {
         p->sock = -1;
     }
 
+    return PlatformStatusOk;
+}
+
+PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *timer_handle, PlatformTimerCallback callback) {
+    PlatformData *p = handle->platform;
+    uint8_t free_timer = 0;
+
+    for (free_timer = 0; free_timer < MAX_TIMERS; free_timer++) {
+        DEBUG_LOG("Timer %d: %s", free_timer, p->timers[free_timer].callback ? "Occupied" : "Free");
+        if (p->timers[free_timer].callback == NULL) {
+            break;
+        }
+    }
+    if (free_timer == MAX_TASKS) {
+        return PlatformStatusError;
+    }
+
+    PlatformTimer *timer = &p->timers[free_timer];
+
+    timer->callback = callback;
+    timer->status = interval;
+    timer->interval = interval;
+
+    if (p->timer_task < 0) {
+        PlatformStatusCode ret = platform_run_task(handle, &p->timer_task, timer_task);
+        if (ret != PlatformStatusOk) {
+            DEBUG_LOG("Could not start timer task");
+            return PlatformStatusError;
+        }
+    }
+
+    *timer_handle = free_timer;
+    return PlatformStatusOk;
+}
+
+PlatformStatusCode platform_destroy_timer(MQTTHandle *handle, int timer_handle) {
+    PlatformData *p = handle->platform;
+
+    if ((timer_handle < 0) || (timer_handle >= MAX_TIMERS)) {
+        DEBUG_LOG("Invalid timer handle");
+        return PlatformStatusError;
+    }
+
+    p->timers[timer_handle].callback = NULL;
+
+
+    // check if there is a timer running
+    uint8_t free_timer = 0;
+
+    for (free_timer = 0; free_timer < MAX_TIMERS; free_timer++) {
+        if (p->timers[free_timer].callback != NULL) {
+            break;
+        }
+    }
+    if ((free_timer == MAX_TIMERS) && (p->timer_task >= 0)) {
+        // if we get here we have no running timers, so we destroy the timer task
+        PlatformStatusCode ret = platform_cleanup_task(handle, p->timer_task);
+        if (ret == PlatformStatusOk) {
+            p->timer_task = -1;
+        } else {
+            DEBUG_LOG("Could not finish timer task");
+            return PlatformStatusError;
+        }
+    }
+
+    return PlatformStatusOk;
+}
+
+
+PlatformStatusCode platform_sleep(int milliseconds) {
+    usleep(milliseconds * 1000);
     return PlatformStatusOk;
 }
