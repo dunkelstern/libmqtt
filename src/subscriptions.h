@@ -21,5 +21,6 @@ void remove_subscription(MQTTHandle *handle, char *topic);
 void subscription_set_pending(MQTTHandle *handle, char *topic, bool pending);
 
 void dispatch_subscription(MQTTHandle *handle, PublishPayload *payload);
+void dispatch_subscription_direct(MQTTHandle *handle, char *topic, char *message);
 
 #endif /* subscription_h__included */

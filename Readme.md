@@ -12,14 +12,12 @@ MQTT library for multiple platforms including embedded targets.
 - MQTT connection as a client is working
 - All packet types are implemented
 - Supports MQTT 3.1.1 (aka. protocol level 4)
-- Platform support for linux is working
 - Test have a coverage of about 92% (lines) and 97% (functions), untested code is just bail-out error handling for fatal errors (usually programming errors or network failure)
+- Platform support for Linux and Windows is working
 - Builds on Linux (GCC and Clang) and Windows (MSVC and Clang/c2)
 
 ## TODO
 
-- [ ] QoS testing, server -> client does not
-- [ ] Reconnect does not work correctly
 - [ ] Running in MQTT Broker mode (very low prio)
 - [ ] Implement Protocol level 3 (low prio)
 - [ ] Implement Draft Protocol level 5

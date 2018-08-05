@@ -98,11 +98,28 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
             }
             break;
 
-        case PacketTypePublish:
+        case PacketTypePublish: {
             // DEBUG_LOG("Publish on %s -> %s", ((PublishPayload *)packet->payload)->topic, ((PublishPayload *)packet->payload)->message);
-            dispatch_subscription(handle, (PublishPayload *)packet->payload);
-            // TODO: Handle QoS
+            PublishPayload *payload = (PublishPayload *)packet->payload;
+            switch (payload->qos) {
+                case MQTT_QOS_0:
+                    dispatch_subscription(handle, payload);
+                    break;
+                case MQTT_QOS_1:
+                    if (send_puback_packet(handle, payload->packet_id)) {
+                        DEBUG_LOG("Dispatching subscription...");
+                        dispatch_subscription(handle, payload);
+                    } else {
+                        DEBUG_LOG("Error sending PubAck");
+                    }
+                    break;                    
+                case MQTT_QOS_2:
+                    DEBUG_LOG("Sending PubRec packet");
+                    send_pubrec_packet(handle, payload->packet_id, dispatch_subscription_direct, payload);
+                    break;
+            }
             break;
+        }
 
         // just for keepalive, do not handle
         case PacketTypePingResp:

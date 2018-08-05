@@ -52,6 +52,26 @@ void handle_pubrec(MQTTHandle *handle, void *context) {
     send_buffer(handle, encoded);
 }
 
+void handle_pubrel(MQTTHandle *handle, void *context) {
+    PublishCallback *ctx = (PublishCallback *)context;
+
+    PubCompPayload newPayload = {
+        .packet_id = ctx->payload->packet_id
+    };
+
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubComp, &newPayload });
+    encoded->position = 0;
+    if (send_buffer(handle, encoded)) {
+        if (ctx->callback) {
+            ctx->callback(handle, ctx->payload->topic, ctx->payload->message);
+        }
+    }
+
+    free(ctx->payload->topic);
+    free(ctx->payload->message);
+    free(ctx->payload);
+}
+
 /*
  * packet constructors
  */
@@ -186,6 +206,39 @@ bool send_ping_packet(MQTTHandle *handle) {
 #if MQTT_CLIENT
 bool send_disconnect_packet(MQTTHandle *handle) {
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeDisconnect, NULL });
+    encoded->position = 0;
+    return send_buffer(handle, encoded);
+}
+#endif /* MQTT_CLIENT */
+
+#if MQTT_CLIENT
+bool send_puback_packet(MQTTHandle *handle, uint16_t packet_id) {
+    PacketIDPayload *payload = (PacketIDPayload *)calloc(1, sizeof(PacketIDPayload));
+    payload->packet_id = packet_id;
+
+    DEBUG_LOG("Sending PUBACK");
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubAck, payload });
+    encoded->position = 0;
+    return send_buffer(handle, encoded);
+}
+#endif /* MQTT_CLIENT */
+
+#if MQTT_CLIENT
+bool send_pubrec_packet(MQTTHandle *handle, uint16_t packet_id, MQTTPublishEventHandler callback, PublishPayload *publish) {
+    PacketIDPayload *payload = (PacketIDPayload *)calloc(1, sizeof(PacketIDPayload));
+    payload->packet_id = packet_id;
+
+    PublishCallback *ctx = (PublishCallback *)malloc(sizeof(PublishCallback));
+    ctx->payload = malloc(sizeof(PublishPayload));
+    memcpy(ctx->payload, publish, sizeof(PublishPayload));
+    ctx->payload->topic = strdup(publish->topic);
+    ctx->payload->message = strdup(publish->message);
+    ctx->callback = callback;
+    ctx->qos = MQTT_QOS_2;
+
+    expect_packet(handle, PacketTypePubRel, packet_id, handle_pubrel, ctx);
+
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRec, payload });
     encoded->position = 0;
     return send_buffer(handle, encoded);
 }

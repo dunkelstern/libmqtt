@@ -54,12 +54,25 @@ void subscription_set_pending(MQTTHandle *handle, char *topic, bool pending) {
 void dispatch_subscription(MQTTHandle *handle, PublishPayload *payload) {
     SubscriptionItem *item = handle->subscriptions.items;
 
-    // TODO: Handle server Qos
-
     while (item != NULL) {
         if ((item->pending == false) && (strcmp(payload->topic, item->topic) == 0)) {
             if (item->handler) {
                 item->handler(handle, payload->topic, payload->message);
+            }
+            break;
+        }
+
+        item = item->next;
+    }
+}
+
+void dispatch_subscription_direct(MQTTHandle *handle, char *topic, char *message) {
+    SubscriptionItem *item = handle->subscriptions.items;
+
+    while (item != NULL) {
+        if ((item->pending == false) && (strcmp(topic, item->topic) == 0)) {
+            if (item->handler) {
+                item->handler(handle, topic, message);
             }
             break;
         }
