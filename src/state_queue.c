@@ -55,6 +55,18 @@ void remove_from_queue(MQTTHandle *handle, MQTTCallbackQueueItem *remove) {
     }
 }
 
+void clear_packet_queue(MQTTHandle *handle) {
+    MQTTCallbackQueueItem *item = handle->queue.pending;
+    handle->queue.pending = NULL;
+
+    while (item != NULL) {
+        MQTTCallbackQueueItem *current = item;
+        item = item->next;
+
+        free(current);
+    }
+}
+
 bool dispatch_packet(MQTTHandle *handle, MQTTPacket *packet) {
     MQTTCallbackQueueItem *item = handle->queue.pending;
     uint16_t packet_id = get_packet_id(packet);

@@ -10,6 +10,7 @@
 typedef struct {
     PublishPayload *payload;
     MQTTPublishEventHandler callback;
+    MQTTQosLevel qos;
 } PublishCallback;
 
 /*
@@ -157,6 +158,7 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
             PublishCallback *ctx = (PublishCallback *)malloc(sizeof(PublishCallback));
             ctx->payload = payload;
             ctx->callback = callback;
+            ctx->qos = payload->qos;
             expect_packet(handle, PacketTypePubAck, payload->packet_id, handle_puback_pubcomp, ctx);
             break;
         }
@@ -164,6 +166,7 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
             PublishCallback *ctx = (PublishCallback *)malloc(sizeof(PublishCallback));
             ctx->payload = payload;
             ctx->callback = callback;
+            ctx->qos = payload->qos;
             expect_packet(handle, PacketTypePubRec, payload->packet_id, handle_pubrec, ctx);
             break;
         }

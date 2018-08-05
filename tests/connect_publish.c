@@ -45,8 +45,6 @@ void mqtt_connected(MQTTHandle *handle, void *context) {
         LOG("Could not publish");
         exit(1);
     }
-
-    leave = true;
 }
 
 int main(int argc, char **argv) {
@@ -80,7 +78,8 @@ int main(int argc, char **argv) {
         platform_sleep(1000);
         cancel++;
         if (cancel == 10) {
-            break;
+            LOG("Giving up!");
+            return 1;
         }
     }
 

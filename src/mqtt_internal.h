@@ -22,6 +22,7 @@ struct _MQTTHandle {
     MQTTCallbackQueue queue;
     PlatformData *platform;
 
+    bool reconnecting;
     int keepalive_timer;
 };
 

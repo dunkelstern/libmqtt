@@ -133,6 +133,16 @@ add_executable (connect_subscribe.test tests/connect_subscribe.c)
     )
     add_test(NAME ConnectSubscribe COMMAND ${PROJECT_BINARY_DIR}/connect_subscribe.test)
 
+add_executable (connect_reconnect.test tests/connect_reconnect.c)
+    target_link_libraries (connect_reconnect.test mqtt-full ${PLATFORM_LIBS})
+    target_include_directories(connect_reconnect.test
+        PRIVATE
+            ${PROJECT_BINARY_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/platform
+    )
+    add_test(NAME ConnectReconnect COMMAND ${PROJECT_BINARY_DIR}/connect_reconnect.test)
+
 add_executable (decode_packet.test tests/decode_packet.c)
     target_link_libraries (decode_packet.test mqtt-full ${PLATFORM_LIBS})
     target_include_directories(decode_packet.test

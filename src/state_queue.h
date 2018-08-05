@@ -20,5 +20,6 @@ typedef struct {
 
 void expect_packet(MQTTHandle *handle, MQTTControlPacketType type, uint16_t packet_id, MQTTEventHandler callback, void *context);
 bool dispatch_packet(MQTTHandle *handle, MQTTPacket *packet);
+void clear_packet_queue(MQTTHandle *handle);
 
 #endif /* state_queue_h__included */

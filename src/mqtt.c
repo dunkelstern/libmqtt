@@ -16,6 +16,33 @@ void mqtt_free(MQTTHandle *handle) {
     free(handle);
 }
 
+/*
+ * State handling
+ */
+
+ void cleanup_session(MQTTHandle *handle) {
+    // Remove all waiting packets
+    clear_packet_queue(handle);
+}
+
+static MQTTStatus resubscribe(MQTTHandle *handle) {
+    // re-subscribe to all topics
+    SubscriptionItem *item = handle->subscriptions.items;
+    while (item != NULL) {
+        if (!send_subscribe_packet(handle, item->topic, item->qos)) {
+            DEBUG_LOG("Error sending subscribe packet");
+            return MQTT_STATUS_ERROR;
+        }
+        item = item->next;
+    }
+
+    return MQTT_STATUS_OK;
+}
+
+/*
+ * Keepalive
+ */
+
 static void _keepalive_callback(MQTTHandle *handle, int timer_handle) {
     bool result = send_ping_packet(handle);
     if (!result) {
@@ -23,15 +50,35 @@ static void _keepalive_callback(MQTTHandle *handle, int timer_handle) {
     }
 }
 
+/*
+ * Packet parser
+ */
+
 static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
+    // DEBUG_LOG("Packet, type: %s, packet_id: %d", get_packet_name(packet), get_packet_id(packet));
+
     switch (packet->packet_type) {
         case PacketTypeConnAck:
             if (!dispatch_packet(handle, packet)) {
                 DEBUG_LOG("Unexpected packet! (type: CONNACK)");
+                (void)platform_destroy_timer(handle, handle->keepalive_timer);
+                handle->keepalive_timer = -1;
                 (void)platform_disconnect(handle);
             } else {
+                ConnAckPayload *payload = (ConnAckPayload *)packet->payload;
+                if ((!payload->session_present) && (handle->reconnecting)) {
+                    cleanup_session(handle);
+                    if (resubscribe(handle) != MQTT_STATUS_OK) {
+                        DEBUG_LOG("Could not re-subscribe to all topics!");
+                        (void)platform_destroy_timer(handle, handle->keepalive_timer);
+                        handle->keepalive_timer = -1;
+                        (void)platform_disconnect(handle);
+                    }
+                }
                 if (platform_create_timer(handle, KEEPALIVE_INTERVAL, &handle->keepalive_timer, _keepalive_callback) != PlatformStatusOk) {
                     DEBUG_LOG("Could not create keepalive timer!");
+                    (void)platform_destroy_timer(handle, handle->keepalive_timer);
+                    handle->keepalive_timer = -1;
                     (void)platform_disconnect(handle);
                 }
             }
@@ -45,11 +92,14 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
         case PacketTypeUnsubAck:
             if (!dispatch_packet(handle, packet)) {
                 DEBUG_LOG("Unexpected packet! (type: %s, packet_id: %d)", get_packet_name(packet), get_packet_id(packet));
+                (void)platform_destroy_timer(handle, handle->keepalive_timer);
+                handle->keepalive_timer = -1;
                 (void)platform_disconnect(handle);
             }
             break;
 
         case PacketTypePublish:
+            // DEBUG_LOG("Publish on %s -> %s", ((PublishPayload *)packet->payload)->topic, ((PublishPayload *)packet->payload)->message);
             dispatch_subscription(handle, (PublishPayload *)packet->payload);
             // TODO: Handle QoS
             break;
@@ -65,10 +115,16 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
         case PacketTypePingReq:
         case PacketTypeDisconnect:
             DEBUG_LOG("Server packet on client connection? What's up with the broker?");
+            (void)platform_destroy_timer(handle, handle->keepalive_timer);
+            handle->keepalive_timer = -1;
             (void)platform_disconnect(handle);
             break;
     }
 }
+
+/*
+ * Reading loop
+ */
 
 PlatformTaskFunc(_reader) {
     MQTTHandle *handle = (MQTTHandle *)context;
@@ -98,7 +154,9 @@ PlatformTaskFunc(_reader) {
                 } else {
                     // no space in buffer, bail and reconnect
                     DEBUG_LOG("Buffer overflow!");
-                    platform_disconnect(handle);
+                    (void)platform_destroy_timer(handle, handle->keepalive_timer);
+                    handle->keepalive_timer = -1;
+                    (void)platform_disconnect(handle);
                     handle->reader_alive = false;
                     buffer_release(buffer);
                     return 0;
@@ -136,10 +194,16 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
         return;
     }
 
-    ret = platform_run_task(handle, &handle->read_task_handle, _reader);
-    if (ret == PlatformStatusError) {
-        DEBUG_LOG("Could not start read task");
-        return;
+    if (!handle->reader_alive) {
+        if (handle->read_task_handle >= 0) {
+            platform_cleanup_task(handle, handle->read_task_handle);
+            handle->read_task_handle = -1;
+        }
+        ret = platform_run_task(handle, &handle->read_task_handle, _reader);
+        if (ret == PlatformStatusError) {
+            DEBUG_LOG("Could not start read task");
+            return;
+        }
     }
 
     expect_packet(handle, PacketTypeConnAck, 0, callback, context);
@@ -151,10 +215,15 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
         platform_disconnect(handle);
         if (free_handle) {
             platform_cleanup_task(handle, handle->read_task_handle);
+            handle->read_task_handle = -1;
             mqtt_free(handle);
         }
     }
 }
+
+/*
+ * API
+ */
 
 MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *context, MQTTErrorHandler error_callback) {
     // sanity check
@@ -185,15 +254,15 @@ MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *co
 
 MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *context) {
     if (handle->reader_alive) {
-        DEBUG_LOG("Closing old connection");
-        platform_disconnect(handle);
-        platform_cleanup_task(handle, handle->read_task_handle);
+        (void)platform_destroy_timer(handle, handle->keepalive_timer);
+        handle->keepalive_timer = -1;
+        (void)platform_disconnect(handle);
+        // DEBUG_LOG("Waiting for reader to exit");
+        // platform_cleanup_task(handle, handle->read_task_handle);
     }
 
-    // TODO: re-submit unacknowledged packages with QoS > 0
-    // TODO: clear waiting packets
-    // TODO: re-subscribe all subscriptions
-
+    handle->config->clean_session = false;
+    handle->reconnecting = true;
     _mqtt_connect(handle, callback, context);
 
     return MQTT_STATUS_OK;
@@ -226,9 +295,12 @@ MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosL
 }
 
 MQTTStatus mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context) {
-    send_disconnect_packet(handle);
-    platform_disconnect(handle);
-    platform_cleanup_task(handle, handle->read_task_handle);
+    (void)send_disconnect_packet(handle);
+    (void)platform_destroy_timer(handle, handle->keepalive_timer);
+    handle->keepalive_timer = -1;
+    (void)platform_disconnect(handle);
+    (void)platform_cleanup_task(handle, handle->read_task_handle);
+    handle->read_task_handle = -1;
     mqtt_free(handle);
 
     if (callback) {
