@@ -21,11 +21,7 @@ extern "C" {
 #if MSVC
 #define API __declspec(dllexport)
 #else
-#if DEBUG
-#define API __attribute__((visibility("visible")))
-#else
-#define API __attribute__((visibility("visible")))
-#endif
+#define API __attribute__((visibility("default")))
 #endif
 
 #include <stdint.h>
