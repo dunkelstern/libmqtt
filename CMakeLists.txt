@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 project(LIBMQTT)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_STANDARD 99)
 
 #
 # Version
@@ -24,8 +26,8 @@ if (UNIX)
 endif() # UNIX
 
 if (MSVC)
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG=1 -DMSVC")
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMSVC")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG=1 -DMSVC -Dstrdup=_strdup /std:c++latest")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMSVC -Dstrdup=_strdup /std:c++latest")
 endif()
 
 #

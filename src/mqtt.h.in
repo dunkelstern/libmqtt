@@ -14,12 +14,19 @@
 #define LIBMQTT_VERSION_MAJOR @LIBMQTT_VERSION_MAJOR@
 #define LIBMQTT_VERSION_MINOR @LIBMQTT_VERSION_MINOR@
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+#if MSVC
+#define API __declspec(dllexport)
+#else
+#define API
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifndef _unused
-#define _unused __attribute__((unused))
-#endif
 
 typedef struct _MQTTHandle MQTTHandle;
 
@@ -84,7 +91,7 @@ typedef void (*MQTTPublishEventHandler)(MQTTHandle *handle, char *topic, char *p
  * the handler is in charge of freeing the handle by returning true
  * or re-trying by changing settings and calling mqtt_reconnect() and returning false
  */
-MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *callback_context, MQTTErrorHandler error_callback);
+API MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *callback_context, MQTTErrorHandler error_callback);
 
 /**
  * Re-Connect to MQTT broker
@@ -100,7 +107,7 @@ MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *ca
  * @param callback_context: Context pointer for the callback
  * @returns: Status code
  */
-MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
+API MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
 
 /**
  * Subscribe to a topic
@@ -111,7 +118,7 @@ MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *c
  * @param callback: Callback function to call when receiving something for that topic
  * @returns: Status code
  */
-MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
+API MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
 
 /**
  * Un-Subscribe from a topic
@@ -120,7 +127,7 @@ MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_leve
  * @param topic: Topic to unsubscribe
  * @returns: Status code
  */
-MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
+API MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
 
 /**
  * Publish something to the broker
@@ -132,7 +139,7 @@ MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
  * @param callback: finish callback
  * @returns: Status code
  */
-MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
+API MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
 
 /**
  * Disconnect from MQTT broker
@@ -143,6 +150,10 @@ MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosL
  * @attention: do not use the handle after calling this function,
  *             all resources will be freed, this handle is now invalid!
  */
-MQTTStatus mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
+API MQTTStatus mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* mqtt_h__included */

@@ -70,7 +70,8 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
     }
 }
 
-static void *_reader(MQTTHandle *handle) {
+PlatformTaskFunc(_reader) {
+    MQTTHandle *handle = (MQTTHandle *)context;
     Buffer *buffer = buffer_allocate(max_receive_buffer_size);
 
     handle->reader_alive = true;
@@ -79,7 +80,7 @@ static void *_reader(MQTTHandle *handle) {
         PlatformStatusCode ret = platform_read(handle, buffer);
         if (ret == PlatformStatusError) {
             handle->reader_alive = false;
-            return NULL;
+            return 0;
         }
 
         while (1) {
@@ -100,7 +101,7 @@ static void *_reader(MQTTHandle *handle) {
                     platform_disconnect(handle);
                     handle->reader_alive = false;
                     buffer_release(buffer);
-                    return NULL;
+                    return 0;
                 }
             } else {
                 hexdump(buffer->data, num_bytes, 2);

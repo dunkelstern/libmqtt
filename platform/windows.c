@@ -32,7 +32,8 @@ struct _PlatformData {
     int timer_task;
 };
 
-void *timer_task(MQTTHandle *handle) {
+PlatformTaskFunc(timer_task) {
+    MQTTHandle *handle = (MQTTHandle *)context; 
     while (1) {
         platform_sleep(1000);
 
@@ -53,7 +54,7 @@ void *timer_task(MQTTHandle *handle) {
         }
 
         if (!active) {
-            return NULL;
+            return 0;
         }
     }
 }
@@ -159,7 +160,7 @@ PlatformStatusCode platform_resolve_host(char *hostname , char *ip) {
     addr_list = (struct in_addr **) he->h_addr_list;
      
     for(i = 0; addr_list[i] != NULL; i++) {
-        strcpy(ip , inet_ntoa(*addr_list[i]));
+        strncpy_s(ip, 40, inet_ntoa(*addr_list[i]), 40);
         break;
     }
 
@@ -179,7 +180,9 @@ PlatformStatusCode platform_connect(MQTTHandle *handle) {
         if (free_handle) {
             mqtt_free(handle);
         }
-        DEBUG_LOG("Resolving hostname failed: %s", strerror(errno));
+        char err_msg[200];
+        strerror_s(err_msg, 200, errno);
+        DEBUG_LOG("Resolving hostname failed: %s", err_msg);
         return PlatformStatusError;
     }
     servaddr.sin_family = AF_INET;
@@ -191,7 +194,9 @@ PlatformStatusCode platform_connect(MQTTHandle *handle) {
         if (free_handle) {
             mqtt_free(handle);
         }
-        DEBUG_LOG("Resolving hostname failed: %s", strerror(errno));
+        char err_msg[200];
+        strerror_s(err_msg, 200, errno);
+        DEBUG_LOG("Resolving hostname failed: %s", err_msg);
 		closesocket(p->sock);
         return PlatformStatusError;
     }
@@ -203,7 +208,9 @@ PlatformStatusCode platform_connect(MQTTHandle *handle) {
         if (free_handle) {
             mqtt_free(handle);
         }
-        DEBUG_LOG("Connection failed: %s", strerror(errno));
+        char err_msg[200];
+        strerror_s(err_msg, 200, errno);
+        DEBUG_LOG("Connection failed: %s", err_msg);
 		closesocket(p->sock);
         return PlatformStatusError;
     }
@@ -215,7 +222,7 @@ PlatformStatusCode platform_read(MQTTHandle *handle, Buffer *buffer) {
     PlatformData *p = handle->platform;
 
     while (1) {
-        int num_bytes = recv(p->sock, &buffer->data[buffer->position], buffer_free_space(buffer), 0);
+        int num_bytes = recv(p->sock, &buffer->data[buffer->position], (int)buffer_free_space(buffer), 0);
         if (num_bytes == 0) {
             /* Socket closed, coordinated shutdown */
             DEBUG_LOG("Socket closed");
@@ -238,7 +245,7 @@ PlatformStatusCode platform_write(MQTTHandle *handle, Buffer *buffer) {
     PlatformData *p = handle->platform;
 
     while (!buffer_eof(buffer)) {
-        int bytes = send(p->sock, buffer->data + buffer->position, buffer_free_space(buffer), 0);
+        int bytes = send(p->sock, buffer->data + buffer->position, (int)buffer_free_space(buffer), 0);
         if (bytes <= 0) {
             return PlatformStatusError;
         }

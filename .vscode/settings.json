@@ -25,5 +25,6 @@
         "**/*.a": true,
         "**/build": true
     },
-    "coverage-gutters.lcovname": "coverage.info"
+    "coverage-gutters.lcovname": "coverage.info",
+    "cmake.buildDirectory": "${workspaceRoot}/build"
 }

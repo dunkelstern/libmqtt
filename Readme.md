@@ -5,7 +5,7 @@ MQTT library for multiple platforms including embedded targets.
 1. Readable code, modern C
 2. Simple and fool-proof API
 3. High test coverage (aim is >85% of all lines tested)
-4. Suitable for embedded or Unixy targets (no static allocation though)
+4. Suitable for embedded or bigger targets (no static allocation though)
 
 ## Current state
 
@@ -14,13 +14,15 @@ MQTT library for multiple platforms including embedded targets.
 - Supports MQTT 3.1.1 (aka. protocol level 4)
 - Platform support for linux is working
 - Test have a coverage of about 92% (lines) and 97% (functions), untested code is just bail-out error handling for fatal errors (usually programming errors or network failure)
+- Builds on Linux (GCC and Clang) and Windows (MSVC and Clang/c2)
 
 ## TODO
 
 - [ ] QoS testing, server -> client does not
-- [ ] Running in MQTT Broker mode
+- [ ] Reconnect does not work correctly
+- [ ] Running in MQTT Broker mode (very low prio)
 - [ ] Implement Protocol level 3 (low prio)
-- [ ] Implement Draft Protocol level 5 (somewhat low prio as it's a draft spec)
+- [ ] Implement Draft Protocol level 5
 - [ ] Support ESP8266 (RTOS)
 - [ ] Support ESP32 (IDF)
 
@@ -85,6 +87,73 @@ make coverage
 ```
 
 Be aware to create the coverage report the tests must run, so you'll need the MQTT broker.
+
+### Building on Windows
+
+Requirements:
+
+- `cmake` in path
+- Visual Studio (Community Edition is sufficient)
+- Checked out repo
+
+#### With Visual Studio (MSVC)
+
+1. Run cmake:
+```powershell
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release .. -G "Visual Studio 15 2017 Win64"
+```
+2. Build the library
+```powershell
+cd build
+cmake --build c:/absolute/path/to/build --config Debug --target ALL_BUILD -- /m /property:GenerateFullPaths=true
+```
+
+The dynamic and static libs will be placed in the `<config>/` sub-dir of that folder and the include is in `src/mqtt.h`
+Alternatively open the Visual Studio solution in the `build` dir in Visual Studio.
+
+**Attention:** As MSVC is not C99 compliant the tests for encode and decode packet will not work. Use `clang` for that.
+
+#### With Visual Studio (clang)
+
+Requirements:
+
+- Clang/C2 installed (experimental option in Visual Studio Installer)
+
+1. Run cmake:
+```powershell
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release .. -G "Visual Studio 15 2017 Win64" -T v141_clang_c2
+```
+2. Build the library
+```powershell
+cd build
+cmake --build c:/absolute/path/to/build --config Debug --target ALL_BUILD -- /m /property:GenerateFullPaths=true
+```
+
+The dynamic and static libs will be placed in the `<config>/` sub-dir of that folder and the include is in `src/mqtt.h`
+Alternatively open the Visual Studio solution in the `build` dir in Visual Studio.
+
+### Testing on Windows
+
+Requirements:
+
+- Local MQTT broker, simplest is mosquitto (can be run by calling `mosquitto -v` in a terminal for debug output)
+
+**Attention:** Coverage report is not possible on Windows currently
+
+1. Build everything
+```powershell
+cd build
+cmake --build c:/absolute/path/to/build --config Debug --target ALL_BUILD -- /m /property:GenerateFullPaths=true
+```
+2. Run tests
+```powershell
+cd build
+ctest -C Debug -T test --output-on-failure
+```
 
 ### API
 

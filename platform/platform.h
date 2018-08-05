@@ -3,7 +3,19 @@
 
 #include "mqtt_internal.h"
 
-typedef void *(*PlatformTask)(MQTTHandle *handle);
+/* Sadly we have to have a Windows-ism here */
+#if MSVC
+    typedef uint32_t (__stdcall *PlatformTask)(void *context);
+
+    // Use this to define the PlatformTask callback functions to be cross platform
+    #define PlatformTaskFunc(_name) uint32_t __stdcall _name(void *context)
+#else
+    typedef void *(*PlatformTask)(void *context);
+
+    // Use this to define the PlatformTask callback functions to be cross platform
+    #define PlatformTaskFunc(_name) void *_name(void *context)
+#endif
+
 typedef void (*PlatformTimerCallback)(MQTTHandle *handle, int timer_handle);
 
 /** maximum receiver buffer size, defined by platform */
