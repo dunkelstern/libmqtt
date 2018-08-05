@@ -34,7 +34,8 @@ struct _PlatformData {
     int sock;
 };
 
-void *timer_task(MQTTHandle *handle) {
+PlatformTaskFunc(timer_task) {
+    MQTTHandle *handle = (MQTTHandle *)context;
     while (1) {
         platform_sleep(1000);
 
