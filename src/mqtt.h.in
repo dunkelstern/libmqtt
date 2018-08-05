@@ -50,6 +50,7 @@ typedef enum {
 } MQTTQosLevel;
 
 typedef enum {
+    MQTT_Error_Internal,               /**< Internal error */
     MQTT_Error_Host_Not_Found,         /**< Host could not be resolved */
     MQTT_Error_Connection_Refused,     /**< Connection was refused, wrong port? */
     MQTT_Error_Broker_Disconnected,    /**< Broker went down, perhaps restart? */

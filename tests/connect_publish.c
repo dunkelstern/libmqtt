@@ -1,31 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
+#include "platform.h"
 #include "mqtt.h"
 
 int leave = 0;
 
 #define LOG(fmt, ...) fprintf(stdout, fmt "\n", ## __VA_ARGS__)
 
-#ifndef _unused
-#define _unused __attribute__((unused))
-#endif
-
-bool err_handler(_unused MQTTHandle *handle, _unused MQTTConfig *config, MQTTErrorCode error) {
+bool err_handler(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode error) {
     LOG("Error received: %d", error);
     exit(1);
 
     return true;
 }
 
-void publish_handler(_unused MQTTHandle *handle, char *topic, char *message) {
+void publish_handler(MQTTHandle *handle, char *topic, char *message) {
     LOG("Published %s -> %s", topic, message);
 
     leave++;
 }
 
-void mqtt_connected(MQTTHandle *handle, _unused void *context) {
+void mqtt_connected(MQTTHandle *handle, void *context) {
     LOG("Connected!");
     MQTTStatus result;
 
@@ -53,7 +49,7 @@ void mqtt_connected(MQTTHandle *handle, _unused void *context) {
     leave = true;
 }
 
-int main(_unused int argc, _unused char **argv) {
+int main(int argc, char **argv) {
     MQTTConfig config = { 0 };
 
     config.client_id = "libmqtt_testsuite_this_is_too_long";
@@ -81,7 +77,7 @@ int main(_unused int argc, _unused char **argv) {
     int cancel = 0;
     while (leave < 3) {
         LOG("Waiting...");
-        sleep(1);
+        platform_sleep(1000);
         cancel++;
         if (cancel == 10) {
             break;
@@ -89,7 +85,7 @@ int main(_unused int argc, _unused char **argv) {
     }
 
     LOG("Waiting for ping to happen...");
-    sleep(5);
+    platform_sleep(5000);
 
     LOG("Disconnecting...");
     MQTTStatus result = mqtt_disconnect(mqtt, NULL, NULL);

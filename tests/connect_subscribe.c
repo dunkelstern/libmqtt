@@ -1,18 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
+#include "platform.h"
 #include "mqtt.h"
 
 bool leave = false;
 
 #define LOG(fmt, ...) fprintf(stdout, fmt "\n", ## __VA_ARGS__)
 
-#ifndef _unused
-#define _unused __attribute__((unused))
-#endif
-
-bool err_handler(_unused MQTTHandle *handle, _unused MQTTConfig *config, MQTTErrorCode error) {
+bool err_handler(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode error) {
     LOG("Error received: %d", error);
 
     return 1;
@@ -32,12 +28,12 @@ void callback(MQTTHandle *handle, char *topic, char *payload) {
         LOG("Could not unsubscribe test 2");
         exit(1);
     }
-    sleep(1);
+    platform_sleep(1000);
 
     leave = true;
 }
 
-void mqtt_connected(MQTTHandle *handle, _unused void *context) {
+void mqtt_connected(MQTTHandle *handle, void *context) {
     LOG("Connected!");
 
     LOG("Trying subscribe on testsuite/mqtt/test...");
@@ -54,7 +50,7 @@ void mqtt_connected(MQTTHandle *handle, _unused void *context) {
     }
 }
 
-int main(_unused int argc, _unused char **argv) {
+int main(int argc, char **argv) {
     MQTTConfig config = { 0 };
 
     config.client_id = "libmqtt_testsuite";
@@ -71,7 +67,7 @@ int main(_unused int argc, _unused char **argv) {
 
     while (!leave) {
         LOG("Waiting...");
-        sleep(1);
+        platform_sleep(1000);
     }
 
     LOG("Disconnecting...");

@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
-#include <libgen.h>
 
 #include <string.h>
 
@@ -66,11 +65,7 @@ static TestResult not_implemented(void) {
 }
 #endif
 
-#ifndef _unused
-#define _unused __attribute__((unused))
-#endif
-
-int main(_unused int argc, _unused char **argv) {
+int main(int argc, char **argv) {
     uint16_t successes = 0;
     uint16_t skips = 0;
     uint16_t failures = 0;

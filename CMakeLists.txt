@@ -17,13 +17,29 @@ configure_file (
 #
 # Build flags
 #
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -fprofile-arcs -ftest-coverage -O0 -pthread -DDEBUG=1")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall -Os -pthread")
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-lgcov")
+if (UNIX)
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -fprofile-arcs -ftest-coverage -O0 -pthread -DDEBUG=1")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall -Os -pthread")
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-lgcov")
+endif() # UNIX
+
+if (MSVC)
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG=1 -DMSVC")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMSVC")
+endif()
 
 #
 # Platform abstraction
 #
+if (MSVC)
+    set(PLATFORM_CODE 
+        platform/windows.c
+        platform/platform.h
+    )
+    find_package(Threads REQUIRED)
+    set(PLATFORM_LIBS wsock32 ws2_32 ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
 if (UNIX)
     set(PLATFORM_CODE 
         platform/linux.c
@@ -84,6 +100,7 @@ add_library(mqtt SHARED ${mqtt-source})
         VERSION "${LIBMQTT_VERSION_MAJOR}.${LIBMQTT_VERSION_MINOR}"
         SOVERSION ${LIBMQTT_VERSION_MAJOR}
     )
+    target_link_libraries(mqtt ${PLATFORM_LIBS})
     target_include_directories(mqtt
         PUBLIC 
             $<INSTALL_INTERFACE:include>    
@@ -100,6 +117,7 @@ add_executable (connect_publish.test tests/connect_publish.c)
         PRIVATE
             ${PROJECT_BINARY_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/platform
     )
     add_test(NAME ConnectPublish COMMAND ${PROJECT_BINARY_DIR}/connect_publish.test)
 
@@ -109,6 +127,7 @@ add_executable (connect_subscribe.test tests/connect_subscribe.c)
         PRIVATE
             ${PROJECT_BINARY_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/platform
     )
     add_test(NAME ConnectSubscribe COMMAND ${PROJECT_BINARY_DIR}/connect_subscribe.test)
 
