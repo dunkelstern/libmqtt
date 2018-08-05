@@ -21,7 +21,7 @@ configure_file (
 #
 if (UNIX)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Wno-unused-parameter -fprofile-arcs -ftest-coverage -O0 -pthread -DDEBUG=1")
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall -Wno-unused-parameter -Os -pthread")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall -Wno-unused-parameter -fvisibility=hidden -fvisibility-inlines-hidden -Os -pthread")
     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-lgcov")
 endif() # UNIX
 
