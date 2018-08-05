@@ -61,7 +61,7 @@ PlatformTaskFunc(timer_task) {
 
 PlatformStatusCode platform_init(MQTTHandle *handle) {
     handle->platform = (PlatformData *)calloc(1, sizeof(struct _PlatformData));
-    handle->platform->sock = -1;
+    handle->platform->sock = INVALID_SOCKET;
     handle->platform->timer_task = -1;
     if (!handle->platform) {
         return PlatformStatusError;
@@ -257,10 +257,10 @@ PlatformStatusCode platform_write(MQTTHandle *handle, Buffer *buffer) {
 
 PlatformStatusCode platform_disconnect(MQTTHandle *handle) {
     PlatformData *p = handle->platform;
-    if (p->sock >= 0) {
+    if (p->sock != INVALID_SOCKET) {
         closesocket(p->sock);
         WSACleanup();
-        p->sock = -1;
+        p->sock = INVALID_SOCKET;
     }
 
     return PlatformStatusOk;

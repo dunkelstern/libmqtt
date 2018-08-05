@@ -5,10 +5,10 @@
 
 /* Sadly we have to have a Windows-ism here */
 #if MSVC
-    typedef uint32_t (__stdcall *PlatformTask)(void *context);
+    typedef unsigned long (__stdcall *PlatformTask)(void *context);
 
     // Use this to define the PlatformTask callback functions to be cross platform
-    #define PlatformTaskFunc(_name) uint32_t __stdcall _name(void *context)
+    #define PlatformTaskFunc(_name) unsigned long __stdcall _name(void *context)
 #else
     typedef void *(*PlatformTask)(void *context);
 
