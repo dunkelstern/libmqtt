@@ -67,11 +67,6 @@ PlatformStatusCode platform_init(MQTTHandle *handle) {
         return PlatformStatusError;
     }
 
-    if (WSAStartup(MAKEWORD(2,2),&handle->platform->wsa) != 0) {
-        DEBUG_LOG("Winsock init failed. Error Code : %d", WSAGetLastError());
-        return PlatformStatusError;
-    }
-
     return PlatformStatusOk;
 }
 
@@ -92,7 +87,7 @@ PlatformStatusCode platform_release(MQTTHandle *handle) {
     // check if there are tasks running
     for (uint8_t free_task = 0; free_task < MAX_TASKS; free_task++) {
         if (p->tasks[free_task] != 0) {
-            DEBUG_LOG("Cannot free platform handle, there are tasks running!");
+            DEBUG_LOG("Cannot free platform handle, there are tasks running! (id: %d)", free_task);
             return PlatformStatusError;
         }
     }
@@ -169,6 +164,11 @@ PlatformStatusCode platform_resolve_host(char *hostname , char *ip) {
 
 PlatformStatusCode platform_connect(MQTTHandle *handle) {
     PlatformData *p = handle->platform;
+
+    if (WSAStartup(MAKEWORD(2,2),&handle->platform->wsa) != 0) {
+        DEBUG_LOG("Winsock init failed. Error Code : %d", WSAGetLastError());
+        return PlatformStatusError;
+    }
 
     int ret;
     struct sockaddr_in servaddr;
@@ -258,6 +258,11 @@ PlatformStatusCode platform_write(MQTTHandle *handle, Buffer *buffer) {
 PlatformStatusCode platform_disconnect(MQTTHandle *handle) {
     PlatformData *p = handle->platform;
     if (p->sock != INVALID_SOCKET) {
+        // u_long mode = 1;
+        // DEBUG_LOG("Unblocking socket");
+        // ioctlsocket(p->sock, FIONBIO, &mode); // unblock socket
+
+        DEBUG_LOG("Closing socket");
         closesocket(p->sock);
         WSACleanup();
         p->sock = INVALID_SOCKET;
@@ -271,7 +276,7 @@ PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *
     uint8_t free_timer = 0;
 
     for (free_timer = 0; free_timer < MAX_TIMERS; free_timer++) {
-        DEBUG_LOG("Timer %d: %s", free_timer, p->timers[free_timer].callback ? "Occupied" : "Free");
+        // DEBUG_LOG("Timer %d: %s", free_timer, p->timers[free_timer].callback ? "Occupied" : "Free");
         if (p->timers[free_timer].callback == NULL) {
             break;
         }
