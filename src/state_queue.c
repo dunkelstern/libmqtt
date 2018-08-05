@@ -63,6 +63,25 @@ void clear_packet_queue(MQTTHandle *handle) {
         MQTTCallbackQueueItem *current = item;
         item = item->next;
 
+        // free stuff inside
+        switch (current->type) {
+            case PacketTypePubRel: {
+                PublishPayload *payload = (PublishPayload *)current->context;
+                free(payload->topic);
+                free(payload->message);
+                free(payload);
+                break;
+            }
+            case PacketTypePubAck:
+            case PacketTypePubComp:
+            case PacketTypeSubAck:
+                free(current->context);
+                break;
+                
+            default:
+                break;
+        }
+
         free(current);
     }
 }
