@@ -152,7 +152,7 @@ TestResult test_encode_connect_simple(void) {
         0x00, 0x04, 'M', 'Q', 'T', 'T', 0x04, 0x02, 0x00, 0x0a, // var header
         0x00, 0x04, 't', 'e', 's', 't' // client id
     };
-    ConnectPayload *payload = calloc(1, sizeof(ConnectPayload));
+    ConnectPayload *payload = (ConnectPayload *)calloc(1, sizeof(ConnectPayload));
 
     payload->client_id = "test";
     payload->protocol_level = 4;
@@ -177,7 +177,7 @@ TestResult test_encode_connect_will(void) {
         0x00, 0x0c, 'd', 'i', 's', 'c', 'o', 'n', 'n', 'e', 'c', 't', 'e', 'd',
 
     };
-    ConnectPayload *payload = calloc(1, sizeof(ConnectPayload));
+    ConnectPayload *payload = (ConnectPayload *)calloc(1, sizeof(ConnectPayload));
 
     payload->client_id = "test";
     payload->protocol_level = 4;
@@ -208,7 +208,7 @@ TestResult test_encode_connect_auth(void) {
         0x00, 0x04, 'a', 'n', 'o', 'n', // username
         0x00, 0x04, 't', 'e', 's', 't' // password
     };
-    ConnectPayload *payload = calloc(1, sizeof(ConnectPayload));
+    ConnectPayload *payload = (ConnectPayload *)calloc(1, sizeof(ConnectPayload));
 
     payload->client_id = "test";
     payload->protocol_level = 4;
@@ -238,7 +238,7 @@ TestResult test_encode_connack(void) {
         0x01, // session present
         0x00 // accepted
     };
-    ConnAckPayload *payload = calloc(1, sizeof(ConnAckPayload));
+    ConnAckPayload *payload = (ConnAckPayload *)calloc(1, sizeof(ConnAckPayload));
 
     payload->session_present = true;
     payload->status = ConnAckStatusAccepted;
@@ -258,7 +258,7 @@ TestResult test_encode_publish_no_msg(void) {
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
         0x00, 0x0a // packet id
     };
-    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+    PublishPayload *payload = (PublishPayload *)calloc(1, sizeof(PublishPayload));
 
     payload->qos = MQTT_QOS_1;
     payload->retain = true;
@@ -275,7 +275,7 @@ TestResult test_encode_publish_no_msg(void) {
 }
 
 TestResult test_encode_publish_dup_qos0(void) {
-    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+    PublishPayload *payload = (PublishPayload *)calloc(1, sizeof(PublishPayload));
 
     payload->qos = MQTT_QOS_0;
     payload->duplicate = true;
@@ -296,7 +296,7 @@ TestResult test_encode_publish_with_msg(void) {
         0x00, 0x0a, // packet id
         'p', 'a', 'y', 'l', 'o', 'a', 'd'
     };
-    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+    PublishPayload *payload = (PublishPayload *)calloc(1, sizeof(PublishPayload));
 
     payload->qos = MQTT_QOS_1;
     payload->retain = true;
@@ -320,7 +320,7 @@ TestResult test_encode_publish_with_msg_qos0(void) {
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
         'p', 'a', 'y', 'l', 'o', 'a', 'd'
     };
-    PublishPayload *payload = calloc(1, sizeof(PublishPayload));
+    PublishPayload *payload = (PublishPayload *)calloc(1, sizeof(PublishPayload));
 
     payload->qos = MQTT_QOS_0;
     payload->retain = true;
@@ -343,7 +343,7 @@ TestResult test_encode_puback(void) {
         0x40, 0x02, // header
         0x00, 0x0a  // packet id
     };
-    PubAckPayload *payload = calloc(1, sizeof(PubAckPayload));
+    PubAckPayload *payload = (PubAckPayload *)calloc(1, sizeof(PubAckPayload));
 
     payload->packet_id = 10;
 
@@ -361,7 +361,7 @@ TestResult test_encode_pubrec(void) {
         0x50, 0x02, // header
         0x00, 0x0a  // packet id
     };
-    PubRecPayload *payload = calloc(1, sizeof(PubRecPayload));
+    PubRecPayload *payload = (PubRecPayload *)calloc(1, sizeof(PubRecPayload));
 
     payload->packet_id = 10;
 
@@ -379,7 +379,7 @@ TestResult test_encode_pubrel(void) {
         0x62, 0x02, // header
         0x00, 0x0a  // packet id
     };
-    PubRelPayload *payload = calloc(1, sizeof(PubRelPayload));
+    PubRelPayload *payload = (PubRelPayload *)calloc(1, sizeof(PubRelPayload));
 
     payload->packet_id = 10;
 
@@ -397,7 +397,7 @@ TestResult test_encode_pubcomp(void) {
         0x70, 0x02, // header
         0x00, 0x0a  // packet id
     };
-    PubCompPayload *payload = calloc(1, sizeof(PubCompPayload));
+    PubCompPayload *payload = (PubCompPayload *)calloc(1, sizeof(PubCompPayload));
 
     payload->packet_id = 10;
 
@@ -417,7 +417,7 @@ TestResult test_encode_subscribe(void) {
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
         0x01 // qos
     };
-    SubscribePayload *payload = calloc(1, sizeof(SubscribePayload));
+    SubscribePayload *payload = (SubscribePayload *)calloc(1, sizeof(SubscribePayload));
 
     payload->packet_id = 10;
     payload->topic = "test/topic";
@@ -438,7 +438,7 @@ TestResult test_encode_suback(void) {
         0x00, 0x0a,  // packet id,
         0x02 // status
     };
-    SubAckPayload *payload = calloc(1, sizeof(SubAckPayload));
+    SubAckPayload *payload = (SubAckPayload *)calloc(1, sizeof(SubAckPayload));
 
     payload->packet_id = 10;
     payload->status = SubAckStatusQoS2;
@@ -458,7 +458,7 @@ TestResult test_encode_unsubscribe(void) {
         0x00, 0x0a, // packet id
         0x00, 0x0a, 't', 'e', 's', 't', '/', 't', 'o', 'p', 'i', 'c',
     };
-    UnsubscribePayload *payload = calloc(1, sizeof(UnsubscribePayload));
+    UnsubscribePayload *payload = (UnsubscribePayload *)calloc(1, sizeof(UnsubscribePayload));
 
     payload->packet_id = 10;
     payload->topic = "test/topic";
@@ -477,7 +477,7 @@ TestResult test_encode_unsuback(void) {
         0xb0, 0x02, // header
         0x00, 0x0a  // packet id,
     };
-    UnsubAckPayload *payload = calloc(1, sizeof(UnsubAckPayload));
+    UnsubAckPayload *payload = (UnsubAckPayload *)calloc(1, sizeof(UnsubAckPayload));
 
     payload->packet_id = 10;
 

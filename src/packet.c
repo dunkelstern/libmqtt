@@ -198,7 +198,7 @@ bool decode_connack(Buffer *buffer, ConnAckPayload *payload) {
 
 bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
     uint8_t flags = buffer->data[buffer->position - 2] & 0x0f;
-    uint16_t start_pos = buffer->position;
+    uint16_t start_pos = (uint16_t)buffer->position;
 
     payload->qos = (MQTTQosLevel)((flags & 0x06) >> 1);
     payload->retain = ((flags & 0x01) > 0);
@@ -335,7 +335,7 @@ MQTTPacket *mqtt_packet_decode(Buffer *buffer) {
  */
 
 Buffer *make_buffer_for_header(size_t sz, MQTTControlPacketType type) {
-    sz += variable_length_int_size(sz); // size field
+    sz += variable_length_int_size((uint16_t)sz); // size field
     sz += 1; // packet type and flags
 
 
@@ -354,7 +354,7 @@ Buffer *make_buffer_for_header(size_t sz, MQTTControlPacketType type) {
     }
 
     buffer->position += 1;
-    variable_length_int_encode(sz - 2, buffer);
+    variable_length_int_encode((uint16_t)(sz - 2), buffer);
 
     return buffer;
 }
