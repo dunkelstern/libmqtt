@@ -211,6 +211,8 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
         return;
     }
 
+    expect_packet(handle, PacketTypeConnAck, 0, callback, context);
+
     if (!handle->reader_alive) {
         if (handle->read_task_handle >= 0) {
             platform_cleanup_task(handle, handle->read_task_handle);
@@ -222,8 +224,6 @@ static void _mqtt_connect(MQTTHandle *handle, MQTTEventHandler callback, void *c
             return;
         }
     }
-
-    expect_packet(handle, PacketTypeConnAck, 0, callback, context);
 
     bool result = send_connect_packet(handle);
     if (result == false) {
@@ -262,6 +262,8 @@ MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *co
 
     handle->config = config;
     handle->error_handler = error_callback;
+    handle->read_task_handle = -1;
+    handle->keepalive_timer = -1;
 
     _mqtt_connect(handle, callback, context);
 

@@ -256,7 +256,7 @@ PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *
     uint8_t free_timer = 0;
 
     for (free_timer = 0; free_timer < MAX_TIMERS; free_timer++) {
-        DEBUG_LOG("Timer %d: %s", free_timer, p->timers[free_timer].callback ? "Occupied" : "Free");
+        // DEBUG_LOG("Timer %d: %s", free_timer, p->timers[free_timer].callback ? "Occupied" : "Free");
         if (p->timers[free_timer].callback == NULL) {
             break;
         }

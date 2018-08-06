@@ -21,6 +21,10 @@ void mqtt_reconnected(MQTTHandle *handle, void *context) {
 void callback(MQTTHandle *handle, char *topic, char *payload) {
     LOG("Received publish: %s -> %s", topic, payload);
 
+    if (leave == 0) {
+        mqtt_reconnect(handle, mqtt_reconnected, NULL);
+    }
+
     leave++;
 }
 
@@ -54,7 +58,6 @@ int main(int argc, char **argv) {
         LOG("Waiting for first publish...");
         platform_sleep(1000);
     }
-    mqtt_reconnect(mqtt, mqtt_reconnected, NULL);
 
     while (leave < 2) {
         LOG("Waiting for second publish...");
