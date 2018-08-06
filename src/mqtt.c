@@ -107,15 +107,17 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
                     break;
                 case MQTT_QOS_1:
                     if (send_puback_packet(handle, payload->packet_id)) {
-                        DEBUG_LOG("Dispatching subscription...");
                         dispatch_subscription(handle, payload);
-                    } else {
-                        DEBUG_LOG("Error sending PubAck");
                     }
                     break;                    
                 case MQTT_QOS_2:
-                    DEBUG_LOG("Sending PubRec packet");
                     send_pubrec_packet(handle, payload->packet_id, dispatch_subscription_direct, payload);
+                    break;
+                default:
+                    DEBUG_LOG("Invalid QoS! (packet_id: %d)", payload->packet_id);
+                    (void)platform_destroy_timer(handle, handle->keepalive_timer);
+                    handle->keepalive_timer = -1;
+                    (void)platform_disconnect(handle);
                     break;
             }
             break;
@@ -184,14 +186,12 @@ PlatformTaskFunc(_reader) {
                 free_MQTTPacket(packet);
 
                 if (!buffer_eof(buffer)) {
-                    buffer->position = buffer->len;
                     buffer->len = max_receive_buffer_size;
 
                     // Not complete recv buffer was consumed, so we have more than one packet in there
                     size_t remaining = max_receive_buffer_size - buffer->position;
                     memmove(buffer->data, buffer->data + buffer->position, remaining);
                     buffer->position = 0;
-                    break;
                 } else {
                     // buffer consumed completely, read another chunk
                     buffer->position = 0;
