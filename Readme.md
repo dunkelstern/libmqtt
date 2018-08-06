@@ -12,9 +12,11 @@ MQTT library for multiple platforms including embedded targets.
 - MQTT connection as a client is working
 - All packet types are implemented
 - Supports MQTT 3.1.1 (aka. protocol level 4)
-- Test have a coverage of about 92% (lines) and 97% (functions), untested code is just bail-out error handling for fatal errors (usually programming errors or network failure)
+- Test have a coverage of about 86.5% (lines) and 100% (functions), untested code is just bail-out error handling for fatal errors (usually programming errors or network failure)
 - Platform support for Linux and Windows is working
 - Builds on Linux (GCC and Clang) and Windows (MSVC and Clang/c2)
+
+![Coverage report Linux](doc/coverage_linux.png)
 
 ## TODO
 
