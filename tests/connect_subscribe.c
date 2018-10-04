@@ -28,7 +28,6 @@ void callback(MQTTHandle *handle, char *topic, char *payload) {
         LOG("Could not unsubscribe test 2");
         exit(1);
     }
-    platform_sleep(1000);
 
     leave = true;
 }
