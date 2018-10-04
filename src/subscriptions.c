@@ -38,6 +38,18 @@ void remove_subscription(MQTTHandle *handle, char *topic) {
     }
 }
 
+void remove_all_subscriptions(MQTTHandle *handle) {
+    SubscriptionItem *item = handle->subscriptions.items;
+    SubscriptionItem *prev = NULL;
+
+    while (item != NULL) {
+        prev = item;
+        item = item->next;
+        free(prev);
+    }
+    handle->subscriptions.items = NULL;
+}
+
 void subscription_set_pending(MQTTHandle *handle, char *topic, bool pending) {
     SubscriptionItem *item = handle->subscriptions.items;
 

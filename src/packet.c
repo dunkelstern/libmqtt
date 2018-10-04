@@ -47,6 +47,37 @@ MQTTPacket *allocate_MQTTPacket(MQTTControlPacketType type) {
 }
 
 void free_MQTTPacket(MQTTPacket *packet) {
+    switch (packet->packet_type) {
+        case PacketTypePublish: {
+            PublishPayload *content = (PublishPayload *)packet->payload;
+            if (content->topic) free(content->topic);
+            if (content->message) free(content->message);
+            break;
+        }
+#if MQTT_SERVER
+        case PacketTypeConnect: {
+            ConnectPayload *content = (ConnectPayload *)packet->payload;
+            if (content->client_id) free(content->client_id);
+            if (content->will_topic) free(content->will_topic);
+            if (content->will_message) free(content->will_message);
+            if (content->username) free(content->username);
+            if (content->password) free(content->password);
+            break;
+        }
+        case PacketTypeSubscribe: {
+            SubscribePayload *content = (SubscribePayload *)packet->payload;
+            if (content->topic) free(content->topic);
+            break;
+        }
+        case PacketTypeUnsubscribe: {
+            UnsubscribePayload *content = (UnsubscribePayload *)packet->payload;
+            if (content->topic) free(content->topic);
+            break;
+        }
+#endif
+        default:
+            break;
+    }
     free(packet->payload);
     packet->payload = NULL;
     free(packet);
@@ -211,7 +242,7 @@ bool decode_publish(Buffer *buffer, PublishPayload *payload, size_t sz) {
             + buffer->data[buffer->position + 1];
         buffer->position += 2;
     }
-    
+
     size_t len = sz - (buffer->position - start_pos) + 1;
     if (len > 1) {
         payload->message = (char *)calloc(1, len);

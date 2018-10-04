@@ -11,6 +11,7 @@ TestResult test_vl_int_data_0(void) {
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     uint16_t result = variable_length_int_decode(buffer);
     TESTASSERT(result == 0, "Should decode to 0");
+    buffer_release(buffer);
     TEST_OK();
 }
 
@@ -19,6 +20,7 @@ TestResult test_vl_int_data_127(void) {
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     uint16_t result = variable_length_int_decode(buffer);
     TESTASSERT(result == 127, "Should decode to 127");
+    buffer_release(buffer);
     TEST_OK();
 }
 
@@ -27,6 +29,7 @@ TestResult test_vl_int_data_128(void) {
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     uint16_t result = variable_length_int_decode(buffer);
     TESTASSERT(result == 128, "Should decode to 128");
+    buffer_release(buffer);
     TEST_OK();
 }
 
@@ -35,6 +38,7 @@ TestResult test_vl_int_data_16383(void) {
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     uint16_t result = variable_length_int_decode(buffer);
     TESTASSERT(result == 16383, "Should decode to 16383");
+    buffer_release(buffer);
     TEST_OK();
 }
 
@@ -43,6 +47,7 @@ TestResult test_vl_int_data_16384(void) {
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     uint16_t result = variable_length_int_decode(buffer);
     TESTASSERT(result == 16384, "Should decode to 16384");
+    buffer_release(buffer);
     TEST_OK();
 }
 
@@ -51,6 +56,7 @@ TestResult test_vl_int_data_32767(void) {
     Buffer *buffer = buffer_from_data_copy(data, sizeof(data));
     uint16_t result = variable_length_int_decode(buffer);
     TESTASSERT(result == 32767, "Should decode to 32767");
+    buffer_release(buffer);
     TEST_OK();
 }
 
@@ -62,6 +68,8 @@ TestResult test_utf8_string_empty(void) {
     char *string = utf8_string_decode(buffer);
 
     TESTASSERT(strlen(string) == 0, "Should decode empty string");
+    free(string);
+    buffer_release(buffer);
     TEST_OK();
 }
 
@@ -72,6 +80,8 @@ TestResult test_utf8_string_hello(void) {
     char *string = utf8_string_decode(buffer);
 
     TESTASSERT(strncmp("hello", string, 5) == 0, "Should decode to 'hello' string");
+    free(string);
+    buffer_release(buffer);
     TEST_OK();
 }
 
@@ -114,7 +124,6 @@ TestResult test_decode_connect_invalid(void) {
 
     TESTASSERT(packet == NULL, "Packet should not be valid");
     buffer_release(buffer);
-
     TEST_OK();
 }
 

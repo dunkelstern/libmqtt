@@ -13,6 +13,7 @@
 
 void mqtt_free(MQTTHandle *handle) {
     platform_release(handle);
+    remove_all_subscriptions(handle);
     free(handle);
 }
 
@@ -109,7 +110,7 @@ static inline void parse_packet(MQTTHandle *handle, MQTTPacket *packet) {
                     if (send_puback_packet(handle, payload->packet_id)) {
                         dispatch_subscription(handle, payload);
                     }
-                    break;                    
+                    break;
                 case MQTT_QOS_2:
                     send_pubrec_packet(handle, payload->packet_id, dispatch_subscription_direct, payload);
                     break;
@@ -155,6 +156,7 @@ PlatformTaskFunc(_reader) {
         PlatformStatusCode ret = platform_read(handle, buffer);
         if (ret == PlatformStatusError) {
             handle->reader_alive = false;
+            buffer_release(buffer);
             return 0;
         }
 

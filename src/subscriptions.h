@@ -18,6 +18,7 @@ typedef struct {
 
 void add_subscription(MQTTHandle *handle, char *topic, MQTTQosLevel qos, MQTTPublishEventHandler callback);
 void remove_subscription(MQTTHandle *handle, char *topic);
+void remove_all_subscriptions(MQTTHandle *handle);
 void subscription_set_pending(MQTTHandle *handle, char *topic, bool pending);
 
 void dispatch_subscription(MQTTHandle *handle, PublishPayload *payload);

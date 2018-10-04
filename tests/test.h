@@ -51,6 +51,8 @@ static inline TestResult TESTMEMCMP(Buffer *valid, Buffer *check) {
         TESTRESULT_BUFFER(TestStatusFailureHexdump, "Buffer size differs from valid", check, valid);
     }
     if (memcmp(valid->data, check->data, valid->len) == 0) {
+        buffer_release(check);
+        buffer_release(valid);
         TESTRESULT(TestStatusOk, "Buffer matches valid");
     } else {
         TESTRESULT_BUFFER(TestStatusFailureHexdump, "Buffer and valid differ", check, valid);

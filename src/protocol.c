@@ -70,6 +70,7 @@ void handle_pubrel(MQTTHandle *handle, void *context) {
     free(ctx->payload->topic);
     free(ctx->payload->message);
     free(ctx->payload);
+    free(ctx);
 }
 
 /*
@@ -213,11 +214,11 @@ bool send_disconnect_packet(MQTTHandle *handle) {
 
 #if MQTT_CLIENT
 bool send_puback_packet(MQTTHandle *handle, uint16_t packet_id) {
-    PacketIDPayload *payload = (PacketIDPayload *)calloc(1, sizeof(PacketIDPayload));
-    payload->packet_id = packet_id;
+    PacketIDPayload payload = { 0 };
+    payload.packet_id = packet_id;
 
     DEBUG_LOG("Sending PUBACK");
-    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubAck, payload });
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubAck, &payload });
     encoded->position = 0;
     return send_buffer(handle, encoded);
 }
@@ -225,8 +226,8 @@ bool send_puback_packet(MQTTHandle *handle, uint16_t packet_id) {
 
 #if MQTT_CLIENT
 bool send_pubrec_packet(MQTTHandle *handle, uint16_t packet_id, MQTTPublishEventHandler callback, PublishPayload *publish) {
-    PacketIDPayload *payload = (PacketIDPayload *)calloc(1, sizeof(PacketIDPayload));
-    payload->packet_id = packet_id;
+    PacketIDPayload payload = { 0 };
+    payload.packet_id = packet_id;
 
     PublishCallback *ctx = (PublishCallback *)malloc(sizeof(PublishCallback));
     ctx->payload = malloc(sizeof(PublishPayload));
@@ -238,7 +239,7 @@ bool send_pubrec_packet(MQTTHandle *handle, uint16_t packet_id, MQTTPublishEvent
 
     expect_packet(handle, PacketTypePubRel, packet_id, handle_pubrel, ctx);
 
-    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRec, payload });
+    Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubRec, &payload });
     encoded->position = 0;
     return send_buffer(handle, encoded);
 }
