@@ -351,3 +351,27 @@ PlatformStatusCode platform_sleep(int milliseconds) {
 
     return PlatformStatusOk;
 }
+
+#if DEBUG
+void platform_dump(MQTTHandle *handle) {
+    if (handle->platform == NULL) {
+        DEBUG_LOG("   + PLATFORM HANDLE NOT INITIALIZED");
+        return;
+    }
+
+    DEBUG_LOG("   - Timer task ID: %d", handle->platform->timer_task);
+    DEBUG_LOG("   - Socket: %d", (int)handle->platform->sock);
+    DEBUG_LOG("   - WSA data: %d", (int)handle->platform->wsa);
+    DEBUG_LOG("   - Tasks");
+    for (int i = 0; i < MAX_TASKS; i++) {
+        DEBUG_LOG("     - %d, handle: %d", i, handle->platform->tasks[i]);
+    }
+    DEBUG_LOG("   - Timers");
+    for (int i = 0; i < MAX_TIMERS; i++) {
+        DEBUG_LOG("     - Timer %d", i);
+        DEBUG_LOG("       - callback: %d", (int)handle->platform->timers[i].callback);
+        DEBUG_LOG("       - status: %d",  handle->platform->timers[i].status);
+        DEBUG_LOG("       - interval: %d", handle->platform->timers[i].interval);
+    }
+}
+#endif

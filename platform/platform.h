@@ -135,4 +135,13 @@ PlatformStatusCode platform_destroy_timer(MQTTHandle *handle, int timer_handle);
  */
 PlatformStatusCode platform_sleep(int milliseconds);
 
+
+#if DEBUG
+/**
+ * Dump platform data
+ * 
+ * @param handle: State handle
+ */
+void platform_dump(MQTTHandle *handle);
+#endif
 #endif /* platform_h__included */
