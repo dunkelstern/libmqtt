@@ -157,7 +157,11 @@ PlatformTaskFunc(_reader) {
         if (ret == PlatformStatusError) {
             handle->reader_alive = false;
             buffer_release(buffer);
-            return 0;
+            #if PLATFORM_TASK_MAY_EXIT
+                return 0;
+            #else
+                platform_suspend_self();
+            #endif
         }
 
         while (1) {
@@ -180,7 +184,11 @@ PlatformTaskFunc(_reader) {
                     (void)platform_disconnect(handle);
                     handle->reader_alive = false;
                     buffer_release(buffer);
-                    return 0;
+                    #if PLATFORM_TASK_MAY_EXIT
+                        return 0;
+                    #else
+                        platform_suspend_self();
+                    #endif
                 }
             } else {
                 hexdump(buffer->data, num_bytes, 2);
@@ -267,6 +275,7 @@ MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void *co
     handle->read_task_handle = -1;
     handle->keepalive_timer = -1;
 
+    DEBUG_DUMP_HANDLE(handle);
     _mqtt_connect(handle, callback, context);
 
     return handle;
@@ -279,7 +288,9 @@ MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *c
         handle->keepalive_timer = -1;
         (void)platform_disconnect(handle);
         // DEBUG_LOG("Waiting for reader to exit");
-        // platform_cleanup_task(handle, handle->read_task_handle);
+        #if PLATFORM_TASK_MAY_EXIT == 0
+            platform_cleanup_task(handle, handle->read_task_handle);
+        #endif
     }
 
     handle->config->clean_session = false;

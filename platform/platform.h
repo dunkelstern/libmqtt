@@ -9,11 +9,20 @@
 
     // Use this to define the PlatformTask callback functions to be cross platform
     #define PlatformTaskFunc(_name) unsigned long __stdcall _name(void *context)
+
+    #define PLATFORM_TASK_MAY_EXIT 1
+#elif defined(ESP_PLATFORM)
+    typedef void (*PlatformTask)(void *context);
+
+    // Use this to define the PlatformTask callback functions to be cross platform
+    #define PlatformTaskFunc(_name) void _name(void *context)
+    #define PLATFORM_TASK_MAY_EXIT 0
 #else
     typedef void *(*PlatformTask)(void *context);
 
     // Use this to define the PlatformTask callback functions to be cross platform
     #define PlatformTaskFunc(_name) void *_name(void *context)
+    #define PLATFORM_TASK_MAY_EXIT 1
 #endif
 
 typedef void (*PlatformTimerCallback)(MQTTHandle *handle, int timer_handle);
@@ -62,6 +71,29 @@ PlatformStatusCode platform_run_task(MQTTHandle *handle, int *task_handle, Platf
  * @return Platform status code
  */
 PlatformStatusCode platform_cleanup_task(MQTTHandle *handle, int task_handle);
+
+#if PLATFORM_TASK_MAY_EXIT == 0
+/**
+ * Suspend a task indefinitely
+ * 
+ * @param handle: State handle
+ * @param task_handle: Task handle of task to suspend
+ */
+void platform_suspend_task(MQTTHandle *handle, int task_handle);
+
+/**
+ * Restore a suspended task
+ * 
+ * @param handle: State handle
+ * @param task_handle: Task handle of task to resume
+ */
+void platform_resume_task(MQTTHandle *handle, int task_handle);
+
+/**
+ * Suspend a the current task indefinitely
+ */
+void platform_suspend_self();
+#endif
 
 /**
  * Resolve host
@@ -144,4 +176,12 @@ PlatformStatusCode platform_sleep(int milliseconds);
  */
 void platform_dump(MQTTHandle *handle);
 #endif
+
+#ifdef ESP_PLATFORM
+#include "esp_log.h"
+#define platform_printf(_fmt, ...) ESP_LOGI("libmqtt", _fmt, ## __VA_ARGS__)
+#else
+#define platform_printf(_fmt, ...) fprintf(stderr, _fmt "\n", ## __VA_ARGS__)
+#endif
+
 #endif /* platform_h__included */
