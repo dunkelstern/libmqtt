@@ -7,7 +7,13 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#define DEBUG 1
+
 #include "platform.h"
+
 
 #if DEBUG_HEXDUMP
 static inline void hexdump(char *data, size_t len, int indent) {
