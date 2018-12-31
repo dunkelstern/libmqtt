@@ -222,7 +222,7 @@ void event_handler(MQTTHandle *handle, void *context) {
 #### Re-Connect to MQTT broker
 
 ```c
-MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
+MQTTErrorCode mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
 ```
 
 - `handle`: MQTT Handle from `mqtt_connect`
@@ -239,7 +239,7 @@ a successful reconnect.
 #### Subscribe to a topic
 
 ```c
-MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
+MQTTErrorCode mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
 ```
 - `handle`: MQTT Handle from `mqtt_connect`
 - `topic`: Topic to subscribe
@@ -260,7 +260,7 @@ void publish_handler(MQTTHandle *handle, char *topic, char *payload) {
 #### Un-Subscribe from a topic
 
 ```c
-MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
+MQTTErrorCode mqtt_unsubscribe(MQTTHandle *handle, char *topic);
 ```
 
 - `handle`: MQTT Handle from `mqtt_connect`
@@ -270,7 +270,7 @@ MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
 #### Publish something to the broker
 
 ```c
-MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventCallback callback);
+MQTTErrorCode mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventCallback callback);
 ```
 
 - `handle`: MQTT Handle from `mqtt_connect`
@@ -286,7 +286,7 @@ not supported.
 #### Disconnect from MQTT broker
 
 ```c
-MQTTStatus mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
+MQTTErrorCode mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
 ```
 
 - `handle`: MQTT Handle from `mqtt_connect`

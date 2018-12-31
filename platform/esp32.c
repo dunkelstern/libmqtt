@@ -54,30 +54,30 @@ PlatformTaskFunc(timer_task) {
     }
 }
 
-PlatformStatusCode platform_init(MQTTHandle *handle) {
+MQTTErrorCode platform_init(MQTTHandle *handle) {
     DEBUG_LOG("Platform init...")
     handle->platform = (PlatformData *)calloc(1, sizeof(struct _PlatformData));
     if (!handle->platform) {
-        return PlatformStatusError;
+        return MQTT_Error_Out_Of_Memory;
     }
 
     handle->platform->sock = -1;
     handle->platform->timer_task = -1;
 
     DEBUG_LOG("Platform handle %d", (int)handle->platform);
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
-PlatformStatusCode platform_release(MQTTHandle *handle) {
+MQTTErrorCode platform_release(MQTTHandle *handle) {
     PlatformData *p = handle->platform;
 
     // shut down all timers
     if (p->timer_task >= 0) {
         for (uint8_t free_timer = 0; free_timer < MAX_TIMERS; free_timer++) {
-            PlatformStatusCode ret = platform_destroy_timer(handle, free_timer);
-            if (ret != PlatformStatusOk) {
+            MQTTErrorCode ret = platform_destroy_timer(handle, free_timer);
+            if (ret != MQTT_Error_Ok) {
                 DEBUG_LOG("Could not shut down all timers");
-                return PlatformStatusError;
+                return ret;
             }
         }
         vTaskDelete(p->tasks[p->timer_task]);
@@ -87,15 +87,15 @@ PlatformStatusCode platform_release(MQTTHandle *handle) {
     for (uint8_t free_task = 0; free_task < MAX_TASKS; free_task++) {
         if (p->tasks[free_task] != 0) {
             DEBUG_LOG("Cannot free platform handle, there are tasks running!");
-            return PlatformStatusError;
+            return MQTT_Error_Tasks_Running;
         }
     }
 
     free(handle->platform);
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
-PlatformStatusCode platform_run_task(MQTTHandle *handle, int *task_handle, PlatformTask callback) {
+MQTTErrorCode platform_run_task(MQTTHandle *handle, int *task_handle, PlatformTask callback) {
     PlatformData *p = handle->platform;
     uint8_t free_task = 0;
 
@@ -106,32 +106,32 @@ PlatformStatusCode platform_run_task(MQTTHandle *handle, int *task_handle, Platf
     }
     if (free_task == MAX_TASKS) {
         DEBUG_LOG("Error creating task, out of slots");
-        return PlatformStatusError;
+        return MQTT_Error_Max_Number_Of_Tasks_Exceeded;
     }
 
     DEBUG_LOG("Creating task on handle %d", free_task);
 
     if (xTaskCreatePinnedToCore(callback, "mqtt_task", 4096, handle, tskIDLE_PRIORITY, &p->tasks[free_task], 0) != pdPASS) {
-        return PlatformStatusError;
+        return MQTT_Error_Internal;
     }
 
     *task_handle = free_task;
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
-PlatformStatusCode platform_cleanup_task(MQTTHandle *handle, int task_handle) {
+MQTTErrorCode platform_cleanup_task(MQTTHandle *handle, int task_handle) {
     PlatformData *p = handle->platform;
     DEBUG_LOG("Cleaning up task %d", task_handle);
 
     if ((task_handle < 0) || (task_handle >= MAX_TASKS)) {
-        return PlatformStatusError;
+        return MQTT_Error_Invalid_Parameter;
     }
 
     if (p->tasks[task_handle]) {
         vTaskDelete(p->tasks[task_handle]);
         p->tasks[task_handle] = 0;
     }
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
 void platform_suspend_task(MQTTHandle *handle, int task_handle) {
@@ -149,7 +149,7 @@ void platform_suspend_self() {
     vTaskSuspend(NULL);
 }
 
-PlatformStatusCode platform_resolve_host(char *hostname , char *ip) {
+MQTTErrorCode platform_resolve_host(char *hostname , char *ip) {
     struct addrinfo hints, *servinfo;
     struct sockaddr_in *h;
  
@@ -160,7 +160,7 @@ PlatformStatusCode platform_resolve_host(char *hostname , char *ip) {
     int ret = getaddrinfo(hostname, NULL, &hints, &servinfo);
     if (ret != 0) {
         DEBUG_LOG("Resolving host failed: %s", strerror(ret));
-        return PlatformStatusError;
+        return MQTT_Error_Host_Not_Found;
     }
 
     // FIXME: we do not try to connect here, perhaps return a list or just the first
@@ -171,10 +171,10 @@ PlatformStatusCode platform_resolve_host(char *hostname , char *ip) {
     }
      
     freeaddrinfo(servinfo); // all done with this structure
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
-PlatformStatusCode platform_connect(MQTTHandle *handle) {
+MQTTErrorCode platform_connect(MQTTHandle *handle) {
     PlatformData *p = handle->platform;
 
     int ret;
@@ -188,14 +188,10 @@ PlatformStatusCode platform_connect(MQTTHandle *handle) {
 
     DEBUG_LOG("Resolving host...");
     char ip[40];
-    if (platform_resolve_host(handle->config->hostname, ip) != PlatformStatusOk) {
-        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Host_Not_Found);
-        if (free_handle) {
-            mqtt_free(handle);
-        }
-        DEBUG_LOG("Resolving hostname failed: %s", strerror(errno));
+    if (platform_resolve_host(handle->config->hostname, ip) != MQTT_Error_Ok) {
         close(p->sock);
-        return PlatformStatusError;
+        DEBUG_LOG("Resolving hostname failed: %s", strerror(errno));
+        return MQTT_Error_Host_Not_Found;
     }
 
     ret = inet_pton(AF_INET, ip, &(servaddr.sin_addr));
@@ -207,41 +203,32 @@ PlatformStatusCode platform_connect(MQTTHandle *handle) {
     );
 
     if (ret == 0) {
-        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Host_Not_Found);
-        if (free_handle) {
-            mqtt_free(handle);
-        }
         DEBUG_LOG("Converting to servaddr failed: %s", strerror(errno));
         close(p->sock);
-        return PlatformStatusError;
+        return MQTT_Error_Internal;
     }
 
     DEBUG_LOG("Connecting...")
     ret = connect(p->sock, (struct sockaddr *)&servaddr, sizeof(servaddr));
     if (ret != 0) {
-        bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Connection_Refused);
-        if (free_handle) {
-            mqtt_free(handle);
-        }
         DEBUG_LOG("Connection failed: %s", strerror(errno));
         close(p->sock);
-        return PlatformStatusError;
+        return MQTT_Error_Connection_Refused;
     }
 
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
-PlatformStatusCode platform_read(MQTTHandle *handle, Buffer *buffer) {
+MQTTErrorCode platform_read(MQTTHandle *handle, Buffer *buffer) {
     PlatformData *p = handle->platform;
 
-    DEBUG_DUMP_HANDLE(handle);
     DEBUG_LOG("Read loop entered...");
     while (1) {
         ssize_t num_bytes = read(p->sock, &buffer->data[buffer->position], buffer_free_space(buffer));
         if (num_bytes == 0) {
             /* Socket closed, coordinated shutdown */
             DEBUG_LOG("Socket closed");
-            return PlatformStatusError;
+            return MQTT_Error_Connection_Reset;
         } else if (num_bytes < 0) {
             if ((errno == EINTR) || (errno == EAGAIN)) {
                 continue;
@@ -249,33 +236,37 @@ PlatformStatusCode platform_read(MQTTHandle *handle, Buffer *buffer) {
 
             /* Some error occured */
             DEBUG_LOG("Error reading...");
-            return PlatformStatusError;
+            return MQTT_Error_Internal;
         }
 
         buffer->position += num_bytes;
         DEBUG_LOG("Read %d bytes, buffer now at %d bytes", num_bytes, buffer->position);
-        return PlatformStatusOk;
+        return MQTT_Error_Ok;
     }
 }
 
-PlatformStatusCode platform_write(MQTTHandle *handle, Buffer *buffer) {
+MQTTErrorCode platform_write(MQTTHandle *handle, Buffer *buffer) {
     PlatformData *p = handle->platform;
 
     DEBUG_LOG("Writing data...");
+    if (!handle->reader_alive) {
+        DEBUG_LOG("Reader task is dead!");
+        return MQTT_Error_Connection_Reset;
+    }
     while (!buffer_eof(buffer)) {
         ssize_t bytes = write(p->sock, buffer->data + buffer->position, buffer_free_space(buffer));
         if (bytes <= 0) {
             DEBUG_LOG("Error while writing...");
-            return PlatformStatusError;
+            return MQTT_Error_Internal;
         }
         buffer->position += bytes;
     }
 
     DEBUG_LOG("Write succeeded");
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
-PlatformStatusCode platform_disconnect(MQTTHandle *handle) {
+MQTTErrorCode platform_disconnect(MQTTHandle *handle) {
     DEBUG_LOG("Closing socket");
     PlatformData *p = handle->platform;
     if (p->sock >= 0) {
@@ -283,10 +274,10 @@ PlatformStatusCode platform_disconnect(MQTTHandle *handle) {
         p->sock = -1;
     }
 
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
-PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *timer_handle, PlatformTimerCallback callback) {
+MQTTErrorCode platform_create_timer(MQTTHandle *handle, int interval, int *timer_handle, PlatformTimerCallback callback) {
     PlatformData *p = handle->platform;
     uint8_t free_timer = 0;
 
@@ -296,9 +287,9 @@ PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *
             break;
         }
     }
-    if (free_timer == MAX_TASKS) {
+    if (free_timer == MAX_TIMERS) {
         DEBUG_LOG("Could not allocate timer, out of slots");
-        return PlatformStatusError;
+        return MQTT_Error_Max_Number_Of_Timers_Exceeded;
     }
 
     DEBUG_LOG("Creating timer with interval %d at %d...", interval, free_timer);
@@ -310,25 +301,25 @@ PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *
     timer->interval = interval;
 
     if (p->timer_task < 0) {
-        PlatformStatusCode ret = platform_run_task(handle, &p->timer_task, timer_task);
-        if (ret != PlatformStatusOk) {
+        MQTTErrorCode ret = platform_run_task(handle, &p->timer_task, timer_task);
+        if (ret != MQTT_Error_Ok) {
             DEBUG_LOG("Could not start timer task");
-            return PlatformStatusError;
+            return ret;
         }
     }
 
     *timer_handle = free_timer;
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
-PlatformStatusCode platform_destroy_timer(MQTTHandle *handle, int timer_handle) {
+MQTTErrorCode platform_destroy_timer(MQTTHandle *handle, int timer_handle) {
     PlatformData *p = handle->platform;
 
     DEBUG_LOG("Destroying timer %d", timer_handle);
 
     if ((timer_handle < 0) || (timer_handle >= MAX_TIMERS)) {
         DEBUG_LOG("Invalid timer handle");
-        return PlatformStatusError;
+        return MQTT_Error_Invalid_Parameter;
     }
 
     p->timers[timer_handle].callback = NULL;
@@ -344,22 +335,22 @@ PlatformStatusCode platform_destroy_timer(MQTTHandle *handle, int timer_handle) 
     }
     if ((free_timer == MAX_TIMERS) && (p->timer_task >= 0)) {
         // if we get here we have no running timers, so we destroy the timer task
-        PlatformStatusCode ret = platform_cleanup_task(handle, p->timer_task);
-        if (ret == PlatformStatusOk) {
+        MQTTErrorCode ret = platform_cleanup_task(handle, p->timer_task);
+        if (ret == MQTT_Error_Ok) {
             p->timer_task = -1;
         } else {
             DEBUG_LOG("Could not finish timer task");
-            return PlatformStatusError;
+            return ret;
         }
     }
 
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
 
-PlatformStatusCode platform_sleep(int milliseconds) {
+MQTTErrorCode platform_sleep(int milliseconds) {
     vTaskDelay(milliseconds / portTICK_PERIOD_MS);
-    return PlatformStatusOk;
+    return MQTT_Error_Ok;
 }
 
 #if DEBUG

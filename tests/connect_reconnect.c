@@ -32,8 +32,8 @@ void mqtt_connected(MQTTHandle *handle, void *context) {
     LOG("Connected!");
 
     LOG("Trying subscribe on testsuite/mqtt/test...");
-    MQTTStatus result = mqtt_subscribe(handle, "testsuite/mqtt/test", MQTT_QOS_0, callback);
-    if (result != MQTT_STATUS_OK) {
+    MQTTErrorCode result = mqtt_subscribe(handle, "testsuite/mqtt/test", MQTT_QOS_0, callback);
+    if (result != MQTT_Error_Ok) {
         LOG("Could not subscribe test");
         exit(1);
     }

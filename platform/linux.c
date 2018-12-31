@@ -171,33 +171,36 @@ PlatformStatusCode platform_connect(MQTTHandle *handle) {
 
     char ip[40];
     if (platform_resolve_host(handle->config->hostname, ip) != PlatformStatusOk) {
+        close(p->sock);
+        // FIXME: This will lead to stack overflow
         bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Host_Not_Found);
         if (free_handle) {
             mqtt_free(handle);
         }
         DEBUG_LOG("Resolving hostname failed: %s", strerror(errno));
-        close(p->sock);
         return PlatformStatusError;
     }
     ret = inet_pton(AF_INET, ip, &(servaddr.sin_addr));
     if (ret == 0) {
+        close(p->sock);
+        // FIXME: This will lead to stack overflow
         bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Host_Not_Found);
         if (free_handle) {
             mqtt_free(handle);
         }
         DEBUG_LOG("Converting to servaddr failed: %s", strerror(errno));
-        close(p->sock);
         return PlatformStatusError;
     }
 
     ret = connect(p->sock, (struct sockaddr *)&servaddr, sizeof(servaddr));
     if (ret != 0) {
+        close(p->sock);
+        // FIXME: This will lead to stack overflow
         bool free_handle = handle->error_handler(handle, handle->config, MQTT_Error_Connection_Refused);
         if (free_handle) {
             mqtt_free(handle);
         }
         DEBUG_LOG("Connection failed: %s", strerror(errno));
-        close(p->sock);
         return PlatformStatusError;
     }
 

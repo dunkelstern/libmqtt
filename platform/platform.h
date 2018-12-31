@@ -30,20 +30,13 @@ typedef void (*PlatformTimerCallback)(MQTTHandle *handle, int timer_handle);
 /** maximum receiver buffer size, defined by platform */
 extern const size_t max_receive_buffer_size;
 
-typedef enum {
-    PlatformStatusOk,    /**< Everything ok */
-    PlatformStatusError, /**< Non-recoverable error */
-    PlatformStatusRetry  /**< Recoverable error */
-} PlatformStatusCode;
-
-
 /**
  * Initialize platform specific data
  * 
  * @param handle: The handle to initialize
  * @return Platform status code
  */
-PlatformStatusCode platform_init(MQTTHandle *handle);
+MQTTErrorCode platform_init(MQTTHandle *handle);
 
 /**
  * Platform specific function to release resources associated with a MQTTHandle
@@ -51,7 +44,7 @@ PlatformStatusCode platform_init(MQTTHandle *handle);
  * @param handle: The handle to clean up
  * @return Platform status code
  */
-PlatformStatusCode platform_release(MQTTHandle *handle);
+MQTTErrorCode platform_release(MQTTHandle *handle);
 
 /**
  * Platform specific function to start a reading thread
@@ -61,7 +54,7 @@ PlatformStatusCode platform_release(MQTTHandle *handle);
  * @param callback: callback to run in the thread
  * @return Platform status code
  */
-PlatformStatusCode platform_run_task(MQTTHandle *handle, int *task_handle, PlatformTask callback);
+MQTTErrorCode platform_run_task(MQTTHandle *handle, int *task_handle, PlatformTask callback);
 
 /**
  * Platform specific function to clean up the reading thread
@@ -70,7 +63,7 @@ PlatformStatusCode platform_run_task(MQTTHandle *handle, int *task_handle, Platf
  * @param task_handle: Task handle to clean up
  * @return Platform status code
  */
-PlatformStatusCode platform_cleanup_task(MQTTHandle *handle, int task_handle);
+MQTTErrorCode platform_cleanup_task(MQTTHandle *handle, int task_handle);
 
 #if PLATFORM_TASK_MAY_EXIT == 0
 /**
@@ -102,7 +95,7 @@ void platform_suspend_self();
  * @param ip_out: resulting IP address if no error occured
  * @return Platform status code
  */
-PlatformStatusCode platform_resolve_host(char *hostname, char *ip_out);
+MQTTErrorCode platform_resolve_host(char *hostname, char *ip_out);
 
 /**
  * Connect to host from configuration
@@ -110,7 +103,7 @@ PlatformStatusCode platform_resolve_host(char *hostname, char *ip_out);
  * @param handle: The configuration
  * @return Platform status code
  */
-PlatformStatusCode platform_connect(MQTTHandle *handle);
+MQTTErrorCode platform_connect(MQTTHandle *handle);
 
 /**
  * Read from the "socket" in the handle
@@ -119,7 +112,7 @@ PlatformStatusCode platform_connect(MQTTHandle *handle);
  * @param buffer: Read target
  * @return Platform status code
  */
-PlatformStatusCode platform_read(MQTTHandle *handle, Buffer *buffer);
+MQTTErrorCode platform_read(MQTTHandle *handle, Buffer *buffer);
 
 /**
  * Write to the "socket" in the handle
@@ -128,7 +121,7 @@ PlatformStatusCode platform_read(MQTTHandle *handle, Buffer *buffer);
  * @param buffer: Write source
  * @return Platform status code
  */
-PlatformStatusCode platform_write(MQTTHandle *handle, Buffer *buffer);
+MQTTErrorCode platform_write(MQTTHandle *handle, Buffer *buffer);
 
 /**
  * Disconnect the "socket" in the handle
@@ -136,7 +129,7 @@ PlatformStatusCode platform_write(MQTTHandle *handle, Buffer *buffer);
  * @param handle: State handle
  * @return Platform status code
  */
-PlatformStatusCode platform_disconnect(MQTTHandle *handle);
+MQTTErrorCode platform_disconnect(MQTTHandle *handle);
 
 
 /**
@@ -148,7 +141,7 @@ PlatformStatusCode platform_disconnect(MQTTHandle *handle);
  * @param callback: Callback to call
  * @return Platform status code
  */
-PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *timer_handle, PlatformTimerCallback callback);
+MQTTErrorCode platform_create_timer(MQTTHandle *handle, int interval, int *timer_handle, PlatformTimerCallback callback);
 
 /**
  * Destroy a recurring timer
@@ -156,7 +149,7 @@ PlatformStatusCode platform_create_timer(MQTTHandle *handle, int interval, int *
  * @param timer_handle
  * @return Platform status code
  */
-PlatformStatusCode platform_destroy_timer(MQTTHandle *handle, int timer_handle);
+MQTTErrorCode platform_destroy_timer(MQTTHandle *handle, int timer_handle);
 
 
 /**
@@ -165,7 +158,7 @@ PlatformStatusCode platform_destroy_timer(MQTTHandle *handle, int timer_handle);
  * @param milliseconds: minimum number of milliseconds to sleep
  * @return Platform status code
  */
-PlatformStatusCode platform_sleep(int milliseconds);
+MQTTErrorCode platform_sleep(int milliseconds);
 
 
 #if DEBUG

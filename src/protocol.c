@@ -1,11 +1,11 @@
 #include <stdio.h>
+
+#include "debug.h"
 #include <platform.h>
 
 #include "mqtt_internal.h"
 #include "packet.h"
 #include "buffer.h"
-
-#include "debug.h"
 
 typedef struct {
     PublishPayload *payload;
@@ -17,10 +17,10 @@ typedef struct {
  * Utility
  */
 
-bool send_buffer(MQTTHandle *handle, Buffer *buffer) {
-    PlatformStatusCode ret = platform_write(handle, buffer);
+MQTTErrorCode send_buffer(MQTTHandle *handle, Buffer *buffer) {
+    MQTTErrorCode ret = platform_write(handle, buffer);
     buffer_release(buffer);
-    return (ret == PlatformStatusOk);
+    return ret;
 }
 
 /*
@@ -61,7 +61,7 @@ void handle_pubrel(MQTTHandle *handle, void *context) {
 
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePubComp, &newPayload });
     encoded->position = 0;
-    if (send_buffer(handle, encoded)) {
+    if (send_buffer(handle, encoded) == MQTT_Error_Ok) {
         if (ctx->callback) {
             ctx->callback(handle, ctx->payload->topic, ctx->payload->message);
         }
@@ -78,7 +78,7 @@ void handle_pubrel(MQTTHandle *handle, void *context) {
  */
 
 #if MQTT_CLIENT
-bool send_connect_packet(MQTTHandle *handle) {
+MQTTErrorCode send_connect_packet(MQTTHandle *handle) {
     ConnectPayload *payload = (ConnectPayload *)calloc(1, sizeof(ConnectPayload));
 
     payload->client_id = handle->config->client_id;
@@ -114,7 +114,7 @@ void remove_pending(MQTTHandle *handle, void *context) {
 }
 
 #if MQTT_CLIENT
-bool send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
+MQTTErrorCode send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
     SubscribePayload *payload = (SubscribePayload *)calloc(1, sizeof(SubscribePayload));
 
     payload->packet_id = (++handle->packet_id_counter > 0) ? handle->packet_id_counter : ++handle->packet_id_counter;
@@ -132,7 +132,7 @@ bool send_subscribe_packet(MQTTHandle *handle, char *topic, MQTTQosLevel qos) {
 #endif /* MQTT_CLIENT */
 
 #if MQTT_CLIENT
-bool send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
+MQTTErrorCode send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
     UnsubscribePayload *payload = (UnsubscribePayload *)calloc(1, sizeof(UnsubscribePayload));
 
     payload->packet_id = (++handle->packet_id_counter > 0) ? handle->packet_id_counter : ++handle->packet_id_counter;
@@ -149,7 +149,7 @@ bool send_unsubscribe_packet(MQTTHandle *handle, char *topic) {
 }
 #endif /* MQTT_CLIENT */
 
-bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQosLevel qos, MQTTPublishEventHandler callback) {
+MQTTErrorCode send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQosLevel qos, MQTTPublishEventHandler callback) {
     PublishPayload *payload = (PublishPayload *)calloc(1, sizeof(PublishPayload));
 
     payload->qos = qos;
@@ -161,9 +161,9 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePublish, payload });
     encoded->position = 0;
     bool result = send_buffer(handle, encoded);
-    if (!result) {
+    if (result != MQTT_Error_Ok) {
         free(payload);
-        return false;
+        return result;
     }
 
     // Handle QoS and add waiting packets to queue
@@ -197,7 +197,7 @@ bool send_publish_packet(MQTTHandle *handle, char *topic, char *message, MQTTQos
 }
 
 #if MQTT_CLIENT
-bool send_ping_packet(MQTTHandle *handle) {
+MQTTErrorCode send_ping_packet(MQTTHandle *handle) {
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypePingReq, NULL });
     encoded->position = 0;
     return send_buffer(handle, encoded);
@@ -205,7 +205,7 @@ bool send_ping_packet(MQTTHandle *handle) {
 #endif /* MQTT_CLIENT */
 
 #if MQTT_CLIENT
-bool send_disconnect_packet(MQTTHandle *handle) {
+MQTTErrorCode send_disconnect_packet(MQTTHandle *handle) {
     Buffer *encoded = mqtt_packet_encode(&(MQTTPacket){ PacketTypeDisconnect, NULL });
     encoded->position = 0;
     return send_buffer(handle, encoded);
@@ -213,7 +213,7 @@ bool send_disconnect_packet(MQTTHandle *handle) {
 #endif /* MQTT_CLIENT */
 
 #if MQTT_CLIENT
-bool send_puback_packet(MQTTHandle *handle, uint16_t packet_id) {
+MQTTErrorCode send_puback_packet(MQTTHandle *handle, uint16_t packet_id) {
     PacketIDPayload payload = { 0 };
     payload.packet_id = packet_id;
 
@@ -225,7 +225,7 @@ bool send_puback_packet(MQTTHandle *handle, uint16_t packet_id) {
 #endif /* MQTT_CLIENT */
 
 #if MQTT_CLIENT
-bool send_pubrec_packet(MQTTHandle *handle, uint16_t packet_id, MQTTPublishEventHandler callback, PublishPayload *publish) {
+MQTTErrorCode send_pubrec_packet(MQTTHandle *handle, uint16_t packet_id, MQTTPublishEventHandler callback, PublishPayload *publish) {
     PacketIDPayload payload = { 0 };
     payload.packet_id = packet_id;
 

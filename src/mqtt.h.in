@@ -46,24 +46,25 @@ typedef struct {
 } MQTTConfig;
 
 typedef enum {
-    MQTT_STATUS_OK = 0, /**< All ok, no error */
-    MQTT_STATUS_ERROR   /**< Error, action did not succeed, error handler will be called */
-} MQTTStatus;
-
-typedef enum {
     MQTT_QOS_0 = 0, /**< At most once, drop message if nobody is listening, no ACK */
     MQTT_QOS_1,     /**< At least once, wait for ACK from broker */
     MQTT_QOS_2,     /**< Exactly once, do triple way handshake with broker */
 } MQTTQosLevel;
 
 typedef enum {
+    MQTT_Error_Ok,                     /**< No error */
     MQTT_Error_Internal,               /**< Internal error */
     MQTT_Error_Host_Not_Found,         /**< Host could not be resolved */
     MQTT_Error_Connection_Refused,     /**< Connection was refused, wrong port? */
     MQTT_Error_Broker_Disconnected,    /**< Broker went down, perhaps restart? */
     MQTT_Error_Authentication,         /**< Authentication error, wrong or missing username/password? */
     MQTT_Error_Protocol_Not_Supported, /**< Broker does not speak MQTT protocol 3.1.1 (aka version 4) */
-    MQTT_Error_Connection_Reset        /**< Network connection reset, perhaps network went down? */
+    MQTT_Error_Connection_Reset,       /**< Network connection reset, perhaps network went down? */
+    MQTT_Error_Out_Of_Memory,
+    MQTT_Error_Tasks_Running,
+    MQTT_Error_Max_Number_Of_Tasks_Exceeded,
+    MQTT_Error_Max_Number_Of_Timers_Exceeded,
+    MQTT_Error_Invalid_Parameter
 } MQTTErrorCode;
 
 /** Error handler callback
@@ -107,7 +108,7 @@ API MQTTHandle *mqtt_connect(MQTTConfig *config, MQTTEventHandler callback, void
  * @param callback_context: Context pointer for the callback
  * @returns: Status code
  */
-API MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
+API MQTTErrorCode mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
 
 /**
  * Subscribe to a topic
@@ -118,7 +119,7 @@ API MQTTStatus mqtt_reconnect(MQTTHandle *handle, MQTTEventHandler callback, voi
  * @param callback: Callback function to call when receiving something for that topic
  * @returns: Status code
  */
-API MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
+API MQTTErrorCode mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
 
 /**
  * Un-Subscribe from a topic
@@ -127,7 +128,7 @@ API MQTTStatus mqtt_subscribe(MQTTHandle *handle, char *topic, MQTTQosLevel qos_
  * @param topic: Topic to unsubscribe
  * @returns: Status code
  */
-API MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
+API MQTTErrorCode mqtt_unsubscribe(MQTTHandle *handle, char *topic);
 
 /**
  * Publish something to the broker
@@ -139,7 +140,7 @@ API MQTTStatus mqtt_unsubscribe(MQTTHandle *handle, char *topic);
  * @param callback: finish callback
  * @returns: Status code
  */
-API MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
+API MQTTErrorCode mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTTQosLevel qos_level, MQTTPublishEventHandler callback);
 
 /**
  * Disconnect from MQTT broker
@@ -150,7 +151,7 @@ API MQTTStatus mqtt_publish(MQTTHandle *handle, char *topic, char *payload, MQTT
  * @attention: do not use the handle after calling this function,
  *             all resources will be freed, this handle is now invalid!
  */
-API MQTTStatus mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
+API MQTTErrorCode mqtt_disconnect(MQTTHandle *handle, MQTTEventHandler callback, void *callback_context);
 
 #ifdef __cplusplus
 }

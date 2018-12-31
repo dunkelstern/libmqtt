@@ -23,25 +23,25 @@ void publish_handler(MQTTHandle *handle, char *topic, char *message) {
 
 void mqtt_connected(MQTTHandle *handle, void *context) {
     LOG("Connected!");
-    MQTTStatus result;
+    MQTTErrorCode result;
 
     LOG("Trying publish to testsuite/mqtt/test...");
     result = mqtt_publish(handle, "testsuite/mqtt/test", "payload1", MQTT_QOS_0, publish_handler);
-    if (result != MQTT_STATUS_OK) {
+    if (result != MQTT_Error_Ok) {
         LOG("Could not publish");
         exit(1);
     }
 
     LOG("Trying publish to testsuite/mqtt/test_qos1...");
     result = mqtt_publish(handle, "testsuite/mqtt/test_qos1", "payload2", MQTT_QOS_1, publish_handler);
-    if (result != MQTT_STATUS_OK) {
+    if (result != MQTT_Error_Ok) {
         LOG("Could not publish");
         exit(1);
     }
 
     LOG("Trying publish to testsuite/mqtt/test_qos2...");
     result = mqtt_publish(handle, "testsuite/mqtt/test_qos2", "payload3", MQTT_QOS_2, publish_handler);
-    if (result != MQTT_STATUS_OK) {
+    if (result != MQTT_Error_Ok) {
         LOG("Could not publish");
         exit(1);
     }
@@ -87,8 +87,8 @@ int main(int argc, char **argv) {
     platform_sleep(5000);
 
     LOG("Disconnecting...");
-    MQTTStatus result = mqtt_disconnect(mqtt, NULL, NULL);
-    if (result != MQTT_STATUS_OK) {
+    MQTTErrorCode result = mqtt_disconnect(mqtt, NULL, NULL);
+    if (result != MQTT_Error_Ok) {
         LOG("Could not disconnect");
         exit(1);
     }

@@ -17,8 +17,8 @@ bool err_handler(MQTTHandle *handle, MQTTConfig *config, MQTTErrorCode error) {
 void callback(MQTTHandle *handle, char *topic, char *payload) {
     LOG("Received publish: %s -> %s", topic, payload);
 
-    MQTTStatus result = mqtt_unsubscribe(handle, "testsuite/mqtt/test_qos1");
-    if (result != MQTT_STATUS_OK) {
+    MQTTErrorCode result = mqtt_unsubscribe(handle, "testsuite/mqtt/test_qos1");
+    if (result != MQTT_Error_Ok) {
         LOG("Could not unsubscribe test");
         exit(1);
     }
@@ -30,8 +30,8 @@ void mqtt_connected(MQTTHandle *handle, void *context) {
     LOG("Connected!");
 
     LOG("Trying subscribe on testsuite/mqtt/test_qos1...");
-    MQTTStatus result = mqtt_subscribe(handle, "testsuite/mqtt/test_qos1", MQTT_QOS_1, callback);
-    if (result != MQTT_STATUS_OK) {
+    MQTTErrorCode result = mqtt_subscribe(handle, "testsuite/mqtt/test_qos1", MQTT_QOS_1, callback);
+    if (result != MQTT_Error_Ok) {
         LOG("Could not subscribe test");
         exit(1);
     }
